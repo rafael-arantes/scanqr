@@ -4,8 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params;
+type Context = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function DELETE(request: NextRequest, context: Context) {
+  const { id } = await context.params;
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 

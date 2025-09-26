@@ -1,10 +1,13 @@
+// 1. Importe 'NextRequest' em vez de apenas 'NextResponse'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// 1. A assinatura da função foi corrigida para o padrão do Next.js
-export async function DELETE(request: Request, context: { params: { id: string } }) {
-  // 2. A forma de pegar o 'id' foi ajustada de acordo com o novo parâmetro 'context'
+export async function DELETE(
+  // 2. Use o tipo 'NextRequest' aqui
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   const { id } = context.params;
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });

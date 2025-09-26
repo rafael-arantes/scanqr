@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import QrCodeList from './QrCodeList';
 
 // Componente de Logout (precisa ser um Client Component)
+import Link from 'next/link';
 import LogoutButton from './LogoutButton';
 
 export default async function DashboardPage() {
@@ -52,9 +53,9 @@ export default async function DashboardPage() {
             <p className="text-slate-500">Você ainda não criou nenhum QR Code.</p>
             <p className="text-slate-400 text-sm mt-2">
               Vá para a{' '}
-              <a href="/" className="underline">
+              <Link href="/" className="underline">
                 página inicial
-              </a>{' '}
+              </Link>{' '}
               para começar!
             </p>
           </div>

@@ -1,5 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import DashboardLayout from './DashboardLayout'; // Importe o novo layout
 import QrCodeList from './QrCodeList';
@@ -36,9 +37,9 @@ export default async function DashboardPage() {
           <p className="text-slate-500">Você ainda não criou nenhum QR Code.</p>
           <p className="text-slate-400 text-sm mt-2">
             Vá para a{' '}
-            <a href="/" className="underline">
+            <Link href="/" className="underline">
               página inicial
-            </a>{' '}
+            </Link>{' '}
             para começar!
           </p>
         </div>

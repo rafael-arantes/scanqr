@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Download } from 'lucide-react';
 import Link from 'next/link';
+import QRCodeGenerator from 'qrcode';
 import { useState } from 'react';
-import { QRCode } from 'react-qrcode-logo'; // Usaremos uma versão com mais opções futuras
+import { QRCode as QRCodeComponent } from 'react-qrcode-logo';
 
 export default function HomePage() {
-  // Estados para controlar os inputs e o valor do QR Code
-  // ... dentro do componente HomePage
   const [url, setUrl] = useState('');
   const [qrValue, setQrValue] = useState('');
   const [shorten, setShorten] = useState(false); // Novo estado para o checkbox
   const [isLoading, setIsLoading] = useState(false); // Novo estado para o carregamento
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
 
   const handleGenerateQrCode = async () => {
     setIsLoading(true);
@@ -51,6 +52,44 @@ export default function HomePage() {
     }
 
     setIsLoading(false);
+  };
+
+  const generateFileName = (urlForFileName: string) => {
+    try {
+      // Se for uma URL curta do nosso app, pegamos só o ID
+      if (urlForFileName.startsWith(appUrl)) {
+        return urlForFileName.split('/').pop() || 'qrcode';
+      }
+      const urlObject = new URL(urlForFileName);
+      return urlObject.hostname.replace(/^www\./, ''); // Remove o "www."
+    } catch (error) {
+      console.error('URL inválida para gerar nome de arquivo:', error);
+      return 'qrcode';
+    }
+  };
+
+  const handleDownload = async (qrValue: string) => {
+    if (!qrValue) return;
+
+    const fileName = `${generateFileName(qrValue)}.png`;
+
+    try {
+      const dataUrl = await QRCodeGenerator.toDataURL(qrValue, {
+        width: 1024,
+        margin: 2,
+        errorCorrectionLevel: 'H',
+      });
+
+      const downloadLink = document.createElement('a');
+      downloadLink.href = dataUrl;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível gerar o QR Code para download.');
+    }
   };
 
   return (
@@ -98,8 +137,16 @@ export default function HomePage() {
 
         {/* Área de exibição do QR Code */}
         {qrValue && (
-          <div className="mt-4 p-6 bg-slate-100 dark:bg-slate-700 rounded-lg">
-            <QRCode value={qrValue} size={200} />
+          <div className="mt-4 flex flex-col items-center gap-4">
+            <div className="p-6 bg-slate-100 dark:bg-slate-700 rounded-lg">
+              {/* Adicione o ID aqui */}
+              <QRCodeComponent id="main-qrcode" value={qrValue} size={200} />
+            </div>
+            {/* NOVO BOTÃO DE DOWNLOAD */}
+            <Button onClick={() => handleDownload(qrValue)} variant="secondary" className="w-full flex items-center gap-2">
+              <Download size={16} />
+              Baixar QR Code
+            </Button>
           </div>
         )}
       </div>

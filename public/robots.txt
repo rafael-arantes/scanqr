@@ -1,0 +1,3 @@
+# Bloqueia todos os robôs de busca de todo o site
+User-agent: *
+Disallow: /

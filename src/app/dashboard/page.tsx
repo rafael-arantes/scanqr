@@ -117,7 +117,6 @@ export default function DashboardPage() {
   return (
     <DashboardLayout
       user={{
-        id: userId,
         email: userEmail,
         displayName: displayName,
         avatarUrl: avatarUrl,

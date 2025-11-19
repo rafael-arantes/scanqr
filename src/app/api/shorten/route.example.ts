@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     .single();
 
   let userProfile = profile;
-  
+
   if (profileError || !userProfile) {
     console.error('Erro ao buscar perfil do usuário:', profileError);
     // Fallback: assume plano free se não encontrar perfil

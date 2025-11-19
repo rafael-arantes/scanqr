@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { SubscriptionTier } from '@/lib/subscriptionTiers';
-import { canAddCustomDomain, getCustomDomainLimitMessage, getTierLimits } from '@/lib/subscriptionTiers';
+import { canAddCustomDomain, getCustomDomainLimitMessage } from '@/lib/subscriptionTiers';
 import type { CustomDomainStats } from '@/types/customDomains';
 import { AlertCircle, Check, CheckCircle2, Clock, Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';

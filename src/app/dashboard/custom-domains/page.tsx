@@ -19,11 +19,12 @@ export default async function CustomDomainsPage() {
   // Buscar perfil do usuário
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('subscription_tier')
+    .select('subscription_tier, monthly_scans')
     .eq('id', session.user.id)
     .single();
 
   const userTier = profile?.subscription_tier || 'free';
+  const monthlyScans = profile?.monthly_scans || 0;
 
   // Contar QR Codes para passar para o layout
   const { count } = await supabase.from('qrcodes').select('*', { count: 'exact', head: true }).eq('user_id', session.user.id);
@@ -31,7 +32,7 @@ export default async function CustomDomainsPage() {
   const qrCodeCount = count || 0;
 
   return (
-    <DashboardLayout user={session.user} tier={userTier} qrCodeCount={qrCodeCount}>
+    <DashboardLayout user={session.user} tier={userTier} qrCodeCount={qrCodeCount} monthlyScans={monthlyScans}>
       <CustomDomainsClient tier={userTier} userId={session.user.id} />
     </DashboardLayout>
   );

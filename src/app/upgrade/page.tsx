@@ -13,7 +13,6 @@ export default function UpgradePage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [currentTier, setCurrentTier] = useState<SubscriptionTier>('free');
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserTier = async () => {
@@ -35,7 +34,6 @@ export default function UpgradePage() {
       if (profile) {
         setCurrentTier(profile.subscription_tier as SubscriptionTier);
       }
-      setIsLoading(false);
     };
 
     fetchUserTier();

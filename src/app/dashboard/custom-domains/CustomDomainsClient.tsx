@@ -333,7 +333,7 @@ export default function CustomDomainsPage({ tier, userId }: CustomDomainsPagePro
                     )}
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    Após configurar, aguarde a propagação DNS (pode levar até 48h) e clique em "Verificar".
+                    Após configurar, aguarde a propagação DNS (pode levar até 48h) e clique em &quot;Verificar&quot;.
                   </p>
                 </div>
               )}

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   // ========================================
   // 2. BUSCAR TIER DO USUÁRIO (NOVO)
   // ========================================
-  const { data: profile, error: profileError } = await supabase
+  let { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('subscription_tier')
     .eq('id', session.user.id)

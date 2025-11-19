@@ -32,17 +32,21 @@ export async function POST(request: Request) {
   // ========================================
   // 2. BUSCAR TIER DO USUÁRIO (NOVO)
   // ========================================
-  let { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('subscription_tier')
     .eq('id', session.user.id)
     .single();
 
-  if (profileError || !profile) {
+  let userProfile = profile;
+  
+  if (profileError || !userProfile) {
     console.error('Erro ao buscar perfil do usuário:', profileError);
     // Fallback: assume plano free se não encontrar perfil
-    profile = { subscription_tier: 'free' as SubscriptionTier };
+    userProfile = { subscription_tier: 'free' as SubscriptionTier };
   }
+
+  const userTier: SubscriptionTier = userProfile?.subscription_tier || 'free';
 
   // ========================================
   // 3. CONTAR QR CODES DO USUÁRIO (NOVO)
@@ -62,14 +66,14 @@ export async function POST(request: Request) {
   // ========================================
   // 4. VERIFICAR LIMITE (GATEKEEPING) (NOVO)
   // ========================================
-  if (!canCreateQrCode(profile.subscription_tier, currentCount)) {
-    const message = getQrCodeLimitMessage(profile.subscription_tier, currentCount);
+  if (!canCreateQrCode(userTier, currentCount)) {
+    const message = getQrCodeLimitMessage(userTier, currentCount);
 
     return NextResponse.json(
       {
         error: 'Limite atingido',
         message,
-        current_plan: profile.subscription_tier,
+        current_plan: userTier,
         qr_count: currentCount,
         upgrade_required: true,
       },
@@ -107,8 +111,8 @@ export async function POST(request: Request) {
     // Informações extras para o frontend mostrar
     usage: {
       current: currentCount + 1, // +1 porque acabamos de criar
-      tier: profile.subscription_tier,
-      message: getQrCodeLimitMessage(profile.subscription_tier, currentCount + 1),
+      tier: userTier,
+      message: getQrCodeLimitMessage(userTier, currentCount + 1),
     },
   });
 }

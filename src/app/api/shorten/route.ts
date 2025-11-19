@@ -88,7 +88,7 @@ export async function POST(request: Request) {
   }
 
   // 6. Inserir no banco de dados
-  const { data, error } = await supabase
+  const { data: _data, error } = await supabase
     .from('qrcodes')
     .insert({
       original_url: url,

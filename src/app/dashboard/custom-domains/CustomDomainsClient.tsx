@@ -17,7 +17,7 @@ interface CustomDomainsPageProps {
   userId: string;
 }
 
-export default function CustomDomainsPage({ tier, userId }: CustomDomainsPageProps) {
+export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomainsPageProps) {
   const router = useRouter();
   const [domains, setDomains] = useState<CustomDomainStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,6 @@ export default function CustomDomainsPage({ tier, userId }: CustomDomainsPagePro
   const [isAdding, setIsAdding] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<CustomDomainStats | null>(null);
 
-  const limits = getTierLimits(tier);
   const canAdd = canAddCustomDomain(tier, domains.length);
   const limitMessage = getCustomDomainLimitMessage(tier, domains.length);
   const isRoutingAllowed = tier === 'pro' || tier === 'enterprise';
@@ -76,7 +75,7 @@ export default function CustomDomainsPage({ tier, userId }: CustomDomainsPagePro
       } else {
         alert(data.error || 'Falha ao adicionar domínio');
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Erro ao comunicar com o servidor');
     }
     setIsAdding(false);
@@ -137,7 +136,7 @@ export default function CustomDomainsPage({ tier, userId }: CustomDomainsPagePro
       } else {
         alert('Falha ao remover domínio');
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Erro ao remover domínio');
     }
   };

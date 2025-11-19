@@ -127,7 +127,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
         const data = await response.json();
         alert(data.error || 'Falha ao apagar o QR Code.');
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Ocorreu um erro de comunicação com o servidor.');
     }
   };
@@ -187,7 +187,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
         const data = await response.json();
         alert(`Falha ao atualizar: ${data.error || 'Erro desconhecido'}`);
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Ocorreu um erro de comunicação com o servidor.');
     }
     setIsUpdating(false);

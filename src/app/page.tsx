@@ -67,7 +67,7 @@ export default function HomePage() {
             alert(data.error || 'Ocorreu um erro.');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         alert('Falha na comunicação com o servidor.');
       }
     } else {

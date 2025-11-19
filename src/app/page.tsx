@@ -1,22 +1,35 @@
-// Adicione esta linha no topo para indicar que este é um Componente de Cliente
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download } from 'lucide-react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { BarChart3, Crown, Download, Globe, LineChart, Link2, Sparkles, Zap } from 'lucide-react';
 import Link from 'next/link';
 import QRCodeGenerator from 'qrcode';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QRCode as QRCodeComponent } from 'react-qrcode-logo';
 
 export default function HomePage() {
   const [url, setUrl] = useState('');
   const [qrValue, setQrValue] = useState('');
-  const [shorten, setShorten] = useState(false); // Novo estado para o checkbox
-  const [isLoading, setIsLoading] = useState(false); // Novo estado para o carregamento
+  const [shorten, setShorten] = useState(true); // Ativado por padrão para promover o produto
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    // Verificar se o usuário está autenticado
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
 
   const handleGenerateQrCode = async () => {
     setIsLoading(true);
@@ -34,16 +47,27 @@ export default function HomePage() {
 
         if (response.ok) {
           setQrValue(data.shortUrl);
+
+          // Se houver informação de uso, mostrar ao usuário
+          if (data.usage) {
+            console.log(`📊 Uso: ${data.usage.current} QR Codes no plano ${data.usage.tier}`);
+          }
         } else {
-          // Se o usuário não estiver logado, a API retornará um erro 401
+          // Tratamento de erros específicos
           if (response.status === 401) {
             alert('Você precisa estar logado para encurtar URLs. Redirecionando...');
-            window.location.href = '/login'; // Redireciona para o login
+            window.location.href = '/login';
+          } else if (response.status === 403 && data.upgrade_required) {
+            // Limite atingido - mostrar mensagem amigável com opção de upgrade
+            const upgradeMessage = `${data.message}\n\nDeseja fazer upgrade para criar mais QR Codes?`;
+            if (confirm(upgradeMessage)) {
+              window.location.href = '/upgrade'; // Redireciona para página de upgrade (criar depois)
+            }
           } else {
             alert(data.error || 'Ocorreu um erro.');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         alert('Falha na comunicação com o servidor.');
       }
     } else {
@@ -93,63 +117,327 @@ export default function HomePage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-8">
-      <header className="absolute top-0 left-0 w-full p-4 flex justify-end">
-        <Link href="/dashboard">
-          <Button variant="outline">Acessar Painel</Button>
-        </Link>
-      </header>
-      <div className="flex flex-col items-center justify-center gap-6 w-full max-w-md bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Gerador de QR Code</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-            Cole sua URL abaixo para gerar um QR Code instantaneamente.
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/50 dark:border-slate-700/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                ScanQR
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              {isAuthenticated ? (
+                <Link href="/dashboard">
+                  <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="ghost">Entrar</Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      Começar Grátis
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Hero Text */}
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-sm font-medium text-blue-700 dark:text-blue-300">
+              <Zap className="w-4 h-4" />
+              QR Codes inteligentes com analytics
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+              <span className="text-slate-900 dark:text-white">Crie QR Codes</span>
+              <br />
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Rastreie Resultados
+              </span>
+            </h1>
+            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
+              Gere QR Codes profissionais com URLs encurtadas, analytics em tempo real e domínios customizados. Ideal para
+              marketing, eventos e negócios.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/dashboard">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8"
+                >
+                  Começar Grátis
+                </Button>
+              </Link>
+              <Link href="/upgrade">
+                <Button size="lg" variant="outline" className="text-lg px-8">
+                  Ver Planos
+                </Button>
+              </Link>
+            </div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200 dark:border-slate-700">
+              <div>
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">10+</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">QR Codes Grátis</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">100%</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Analytics</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-slate-900 dark:text-white">∞</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Scans</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - QR Code Generator */}
+          <div className="lg:pl-8">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-blue-500/10 p-8 border border-slate-200 dark:border-slate-700">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Experimente Agora</h2>
+                <p className="text-slate-600 dark:text-slate-400">Crie seu primeiro QR Code em segundos</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="url" className="text-base">
+                    URL de Destino
+                  </Label>
+                  <Input
+                    type="url"
+                    id="url"
+                    placeholder="https://seu-site.com.br"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="h-12 text-base"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Checkbox
+                    id="shorten"
+                    checked={shorten}
+                    onCheckedChange={(checked) => setShorten(Boolean(checked))}
+                    className="border-blue-400"
+                  />
+                  <Label htmlFor="shorten" className="font-normal cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-blue-600" />
+                      <span>Encurtar URL e salvar no dashboard</span>
+                    </div>
+                  </Label>
+                </div>
+
+                <Button
+                  onClick={handleGenerateQrCode}
+                  className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  disabled={!url || isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Gerando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Gerar QR Code
+                    </span>
+                  )}
+                </Button>
+
+                {qrValue && (
+                  <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border-2 border-blue-200 dark:border-blue-800 flex justify-center">
+                      <QRCodeComponent id="main-qrcode" value={qrValue} size={200} />
+                    </div>
+                    <Button onClick={() => handleDownload(qrValue)} variant="secondary" className="w-full h-12 text-base">
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar QR Code (1024x1024)
+                    </Button>
+                    {shorten && (
+                      <p className="text-sm text-center text-slate-600 dark:text-slate-400">
+                        ✨ QR Code salvo no seu{' '}
+                        <Link href="/dashboard" className="text-blue-600 hover:underline font-medium">
+                          dashboard
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Por que escolher o ScanQR?</h2>
+          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+            Muito mais que um simples gerador de QR Codes. Tenha controle total sobre suas campanhas.
           </p>
         </div>
 
-        {/* Área de Inputs */}
-        <div className="w-full flex flex-col gap-4">
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="url">Sua URL</Label>
-            <Input
-              type="url"
-              id="url"
-              placeholder="https://exemplo.com.br"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Feature 1 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Analytics em Tempo Real</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Acompanhe cada scan dos seus QR Codes. Veja estatísticas detalhadas e tome decisões baseadas em dados.
+            </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="shorten" checked={shorten} onCheckedChange={(checked) => setShorten(Boolean(checked))} />
-            <Label htmlFor="shorten" className="font-normal">
-              Encurtar URL (opcional)
-            </Label>
+
+          {/* Feature 2 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Globe className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Domínios Customizados</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Use seu próprio domínio (ex: qr.suaempresa.com) para fortalecer sua marca e aumentar a confiança.
+            </p>
+          </div>
+
+          {/* Feature 3 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Link2 className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">URLs Encurtadas</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Links curtos e elegantes que são fáceis de compartilhar e memorizar. Perfeito para redes sociais.
+            </p>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Super Rápido</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Crie QR Codes em segundos. Interface intuitiva e performance otimizada para sua produtividade.
+            </p>
+          </div>
+
+          {/* Feature 5 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <LineChart className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Dashboard Completo</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Gerencie todos os seus QR Codes em um só lugar. Edite, exclua e monitore com facilidade.
+            </p>
+          </div>
+
+          {/* Feature 6 */}
+          <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 dark:border-slate-700 hover:border-yellow-300 dark:hover:border-yellow-600">
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Crown className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Planos Flexíveis</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Do gratuito ao enterprise. Escolha o plano perfeito para suas necessidades e escale quando precisar.
+            </p>
           </div>
         </div>
+      </section>
 
-        <Button
-          onClick={handleGenerateQrCode}
-          className="w-full"
-          disabled={!url || isLoading} // Desabilita também durante o carregamento
-        >
-          {isLoading ? 'Gerando...' : 'Gerar QR Code'}
-        </Button>
-
-        {/* Área de exibição do QR Code */}
-        {qrValue && (
-          <div className="mt-4 flex flex-col items-center gap-4">
-            <div className="p-6 bg-slate-100 dark:bg-slate-700 rounded-lg">
-              {/* Adicione o ID aqui */}
-              <QRCodeComponent id="main-qrcode" value={qrValue} size={200} />
-            </div>
-            {/* NOVO BOTÃO DE DOWNLOAD */}
-            <Button onClick={() => handleDownload(qrValue)} variant="secondary" className="w-full flex items-center gap-2">
-              <Download size={16} />
-              Baixar QR Code
-            </Button>
+      {/* CTA Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-center shadow-2xl">
+          <h2 className="text-4xl font-bold text-white mb-4">Pronto para começar?</h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Junte-se a milhares de usuários que já estão usando QR Codes inteligentes para crescer seus negócios.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/dashboard">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8">
+                Criar Conta Grátis
+              </Button>
+            </Link>
+            <Link href="/upgrade">
+              <Button size="lg" variant="outline" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8">
+                Ver Planos Premium
+              </Button>
+            </Link>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">ScanQR</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400 max-w-sm">
+                A plataforma completa para criar, gerenciar e rastrear QR Codes profissionais.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Produto</h3>
+              <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+                <li>
+                  <Link href="/upgrade" className="hover:text-blue-600">
+                    Preços
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard" className="hover:text-blue-600">
+                    Dashboard
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Legal</h3>
+              <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+                <li>
+                  <a href="#" className="hover:text-blue-600">
+                    Privacidade
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-blue-600">
+                    Termos
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-slate-200 dark:border-slate-800 mt-8 pt-8 text-center text-slate-600 dark:text-slate-400">
+            <p>© 2025 ScanQR. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

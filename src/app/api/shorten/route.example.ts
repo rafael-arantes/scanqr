@@ -1,11 +1,21 @@
-import { canCreateQrCode, getQrCodeLimitMessage, type SubscriptionTier } from '@/lib/subscriptionTiers';
+/**
+ * EXEMPLO: Implementação de Gatekeeping
+ *
+ * Este arquivo demonstra como implementar verificação de limites
+ * no endpoint de criação de QR Codes.
+ *
+ * Para usar, copie este código para: src/app/api/shorten/route.ts
+ */
+
+import type { SubscriptionTier } from '@/lib/subscriptionTiers';
+import { canCreateQrCode, getQrCodeLimitMessage } from '@/lib/subscriptionTiers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { nanoid } from 'nanoid';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const { url, custom_domain_id } = await request.json();
+  const { url } = await request.json();
 
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -14,25 +24,33 @@ export async function POST(request: Request) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
   if (!session) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  // 2. Buscar tier do usuário
+  // ========================================
+  // 2. BUSCAR TIER DO USUÁRIO (NOVO)
+  // ========================================
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('subscription_tier')
     .eq('id', session.user.id)
     .single();
 
-  if (profileError) {
+  let userProfile = profile;
+
+  if (profileError || !userProfile) {
     console.error('Erro ao buscar perfil do usuário:', profileError);
+    // Fallback: assume plano free se não encontrar perfil
+    userProfile = { subscription_tier: 'free' as SubscriptionTier };
   }
 
-  // Fallback para 'free' se não encontrar perfil
-  const userTier: SubscriptionTier = profile?.subscription_tier || 'free';
+  const userTier: SubscriptionTier = userProfile?.subscription_tier || 'free';
 
-  // 3. Contar QR Codes atuais do usuário
+  // ========================================
+  // 3. CONTAR QR CODES DO USUÁRIO (NOVO)
+  // ========================================
   const { count, error: countError } = await supabase
     .from('qrcodes')
     .select('*', { count: 'exact', head: true })
@@ -45,7 +63,9 @@ export async function POST(request: Request) {
 
   const currentCount = count || 0;
 
-  // 4. GATEKEEPING: Verificar se pode criar mais QR Codes
+  // ========================================
+  // 4. VERIFICAR LIMITE (GATEKEEPING) (NOVO)
+  // ========================================
   if (!canCreateQrCode(userTier, currentCount)) {
     const message = getQrCodeLimitMessage(userTier, currentCount);
 
@@ -57,44 +77,21 @@ export async function POST(request: Request) {
         qr_count: currentCount,
         upgrade_required: true,
       },
-      { status: 403 }
+      { status: 403 } // 403 Forbidden
     );
   }
 
-  // 5. Gerar um ID curto e único
-  const shortId = nanoid(8); // Gera um ID com 8 caracteres, ex: "a7B_x9Pq"
+  // ========================================
+  // 5. CRIAR QR CODE (CÓDIGO ORIGINAL)
+  // ========================================
+  const shortId = nanoid(8);
 
-  // 5.1. Se custom_domain_id foi fornecido, validar
-  if (custom_domain_id) {
-    const { data: customDomain, error: domainError } = await supabase
-      .from('custom_domains')
-      .select('id, verified, user_id')
-      .eq('id', custom_domain_id)
-      .single();
-
-    if (domainError || !customDomain) {
-      return NextResponse.json({ error: 'Domínio customizado não encontrado' }, { status: 404 });
-    }
-
-    // Verificar se o domínio pertence ao usuário
-    if (customDomain.user_id !== session.user.id) {
-      return NextResponse.json({ error: 'Você não tem permissão para usar este domínio' }, { status: 403 });
-    }
-
-    // Verificar se o domínio está verificado
-    if (!customDomain.verified) {
-      return NextResponse.json({ error: 'Este domínio ainda não foi verificado' }, { status: 400 });
-    }
-  }
-
-  // 6. Inserir no banco de dados
   const { data: _data, error } = await supabase
     .from('qrcodes')
     .insert({
       original_url: url,
       short_id: shortId,
-      user_id: session.user.id, // Associa o QR Code ao usuário logado
-      custom_domain_id: custom_domain_id || null, // Associa domínio customizado se fornecido
+      user_id: session.user.id,
     })
     .select()
     .single();
@@ -104,13 +101,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Falha ao encurtar a URL' }, { status: 500 });
   }
 
-  // 7. Retornar a URL encurtada completa com informações de uso
   const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${shortId}`;
 
+  // ========================================
+  // 6. RETORNAR COM INFORMAÇÕES DE USO (NOVO)
+  // ========================================
   return NextResponse.json({
     shortUrl,
+    // Informações extras para o frontend mostrar
     usage: {
-      current: currentCount + 1,
+      current: currentCount + 1, // +1 porque acabamos de criar
       tier: userTier,
       message: getQrCodeLimitMessage(userTier, currentCount + 1),
     },

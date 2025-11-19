@@ -9,11 +9,23 @@ export default async function ShortIdPage({ params }: { params: Promise<{ shortI
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  const { data, error } = await supabase.from('qrcodes').select('original_url').eq('short_id', shortId).single();
+  // Chama a função do banco que incrementa scan_count atomicamente e retorna a URL
+  // Isso garante performance máxima (1 query) e integridade dos dados
+  // A função também verifica o limite de scans mensais do usuário
+  const { data: originalUrl, error } = await supabase.rpc('increment_scan_count', {
+    p_short_id: shortId,
+  });
 
-  if (error || !data) {
+  if (error || !originalUrl) {
+    console.error('Erro ao buscar/incrementar QR Code:', error);
     return notFound();
   }
 
-  redirect(data.original_url);
+  // Se retornou a string especial, significa que o limite foi atingido
+  if (originalUrl === 'SCAN_LIMIT_REACHED') {
+    redirect('/scan-limit-reached');
+  }
+
+  // Redireciona para a URL original
+  redirect(originalUrl);
 }

@@ -11,28 +11,46 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input'; // Importe o Input
-import { Label } from '@/components/ui/label'; // Importe a Label
-import { Copy, Download, Pencil, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { BarChart3, Copy, Download, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import QRCodeGenerator from 'qrcode';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QRCode as QRCodeComponent } from 'react-qrcode-logo';
 
-// Tipos (sem alteração)
+// Tipos
+type CustomDomain = {
+  id: number;
+  domain: string;
+  verified: boolean;
+  mode: 'branding' | 'routing';
+};
+
 type QRCodeType = {
   id: number;
   short_id: string;
   original_url: string;
   created_at: string;
+  scan_count: number;
+  custom_domain_id: number | null;
+  custom_domains?: {
+    id: number;
+    domain: string;
+    verified: boolean;
+    mode: 'branding' | 'routing';
+  } | null;
 };
 
 type QrCodeListProps = {
   qrcodes: QRCodeType[];
+  userTier: 'free' | 'pro' | 'enterprise';
 };
 
-export default function QrCodeList({ qrcodes }: QrCodeListProps) {
+export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
   const [codes, setCodes] = useState(qrcodes);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const supabase = createClientComponentClient();
 
   // === NOVOS ESTADOS PARA O MODAL ===
   // Armazena o QR Code que está sendo editado no momento
@@ -41,12 +59,57 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
   const [newUrl, setNewUrl] = useState('');
   // Estado para controlar o loading do botão de salvar
   const [isUpdating, setIsUpdating] = useState(false);
+  // Domínios customizados disponíveis
+  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
+  // Domínio selecionado para o QR code
+  const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
 
-  // Funções handleCopy e handleDelete (sem alteração)
-  const handleCopy = (shortId: string) => {
-    const shortUrl = `${appUrl}/${shortId}`;
+  // Carregar domínios customizados se for Pro ou Enterprise
+  useEffect(() => {
+    if (userTier === 'pro' || userTier === 'enterprise') {
+      loadCustomDomains();
+    }
+  }, [userTier]);
+
+  const loadCustomDomains = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_domains')
+        .select('id, domain, verified, mode')
+        .eq('verified', true)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setCustomDomains(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar domínios:', error);
+    }
+  };
+
+  // Função helper para obter URL do QR Code
+  const getQrCodeUrl = (qrcode: QRCodeType): string => {
+    // Se tem domínio customizado em modo routing, usa o domínio
+    if (qrcode.custom_domains?.verified && qrcode.custom_domains?.mode === 'routing') {
+      return `https://${qrcode.custom_domains.domain}/${qrcode.short_id}`;
+    }
+    // Caso contrário, usa o domínio padrão
+    return `${appUrl}/${qrcode.short_id}`;
+  };
+
+  // Funções handleCopy e handleDelete
+  const handleCopy = (qrcode: QRCodeType) => {
+    const shortUrl = getQrCodeUrl(qrcode);
     navigator.clipboard.writeText(shortUrl);
-    alert(`URL Curta Copiada: ${shortUrl}`);
+    // Toast notification seria melhor aqui, mas vamos usar alert por enquanto
+    const notification = document.createElement('div');
+    notification.className =
+      'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-bottom-5';
+    notification.textContent = '✓ URL copiada!';
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.remove();
+    }, 2000);
   };
 
   const handleDelete = async (id: number) => {
@@ -64,7 +127,7 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
         const data = await response.json();
         alert(data.error || 'Falha ao apagar o QR Code.');
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Ocorreu um erro de comunicação com o servidor.');
     }
   };
@@ -96,6 +159,7 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
   const handleOpenEditModal = (qr: QRCodeType) => {
     setEditingQr(qr); // Define qual QR Code estamos editando
     setNewUrl(qr.original_url); // Preenche o input com a URL atual
+    setSelectedDomainId(qr.custom_domain_id); // Preenche o domínio atual
   };
 
   const handleUpdateLink = async () => {
@@ -106,7 +170,10 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
       const response = await fetch(`/api/qrcodes/${editingQr.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_url: newUrl }),
+        body: JSON.stringify({
+          new_url: newUrl,
+          custom_domain_id: selectedDomainId,
+        }),
       });
 
       if (response.ok) {
@@ -120,7 +187,7 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
         const data = await response.json();
         alert(`Falha ao atualizar: ${data.error || 'Erro desconhecido'}`);
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Ocorreu um erro de comunicação com o servidor.');
     }
     setIsUpdating(false);
@@ -131,65 +198,148 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
       <div className="w-full">
         {/* ===== LAYOUT DA TABELA PARA DESKTOP (md e acima) ===== */}
         <div className="hidden md:block">
-          <div className="w-full overflow-x-auto border rounded-lg">
-            <table className="min-w-full divide-y">
-              <thead className="bg-slate-50">
+          <div className="w-full overflow-hidden border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">QR Code</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">URL Curta</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">URL Original</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Criado em</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Ações</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    QR Code
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Link Encurtado
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Destino
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Analytics
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Data
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Ações
+                  </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y">
+              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700">
                 {codes.map((qr) => (
-                  <tr key={qr.id}>
-                    <td className="p-4">
-                      <div className="p-2 bg-white inline-block border rounded">
-                        <QRCodeComponent value={`${appUrl}/${qr.short_id}`} size={60} quietZone={2} />
+                  <tr key={qr.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="p-2 bg-white dark:bg-slate-900 inline-block border-2 border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                        <QRCodeComponent value={getQrCodeUrl(qr)} size={64} quietZone={2} />
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <a
-                          href={`${appUrl}/${qr.short_id}`}
+                          href={getQrCodeUrl(qr)}
                           target="_blank"
-                          className="text-blue-600 hover:underline font-mono"
-                        >{`${appUrl.replace('https://', '').replace('http://', '')}/${qr.short_id}`}</a>
-                        <Button variant="ghost" size="icon" onClick={() => handleCopy(qr.short_id)}>
-                          <Copy className="h-4 w-4" />
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-mono text-sm transition-colors"
+                        >
+                          <span className="font-medium">
+                            {qr.custom_domains?.mode === 'routing'
+                              ? `${qr.custom_domains.domain}/${qr.short_id}`
+                              : qr.short_id}
+                          </span>
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                          onClick={() => handleCopy(qr)}
+                          title="Copiar URL"
+                        >
+                          <Copy className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </Button>
                       </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {qr.custom_domains?.verified && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border ${
+                              qr.custom_domains.mode === 'routing'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                            }`}
+                          >
+                            {qr.custom_domains.mode === 'routing' ? '🌐' : '🏷️'}
+                            {qr.custom_domains.domain}
+                          </span>
+                        )}
+                        {!qr.custom_domains && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                            {appUrl.replace('https://', '').replace('http://', '')}
+                          </p>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-4 max-w-xs truncate text-slate-500">
-                      <a href={qr.original_url} target="_blank" title={qr.original_url} className="hover:underline">
+                    <td className="px-6 py-4 max-w-xs">
+                      <a
+                        href={qr.original_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={qr.original_url}
+                        className="text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 truncate block transition-colors"
+                      >
                         {qr.original_url}
                       </a>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {new Date(qr.created_at).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span className="font-bold text-blue-700 dark:text-blue-300">
+                            {qr.scan_count.toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {qr.scan_count === 0 ? 'Nenhum scan' : qr.scan_count === 1 ? '1 scan' : 'scans'}
+                      </p>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center gap-1">
-                        {/* NOVO BOTÃO DE EDITAR (usa DialogTrigger) */}
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                        {new Date(qr.created_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                        })}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(qr.created_at).toLocaleDateString('pt-BR', {
+                          year: 'numeric',
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
                         <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(qr)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400"
+                            onClick={() => handleOpenEditModal(qr)}
+                            title="Editar destino"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <Button variant="ghost" size="icon" onClick={() => handleDownload(qr.short_id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
+                          onClick={() => handleDownload(qr.short_id)}
+                          title="Baixar QR Code"
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-9 w-9 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
                           onClick={() => handleDelete(qr.id)}
-                          className="text-red-500 hover:text-red-700"
+                          title="Excluir QR Code"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -205,56 +355,126 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
         {/* ===== LAYOUT DE CARDS PARA MOBILE (abaixo de md) ===== */}
         <div className="md:hidden space-y-4">
           {codes.map((qr) => (
-            <div key={qr.id} className="bg-white border rounded-lg p-4 shadow-sm">
-              <div className="flex gap-4">
-                {/* Coluna do QR Code */}
-                <div className="flex-shrink-0">
-                  <div className="p-1 bg-white inline-block border rounded">
-                    <QRCodeComponent value={`${appUrl}/${qr.short_id}`} size={80} quietZone={2} />
+            <div
+              key={qr.id}
+              className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden"
+            >
+              {/* Header do Card */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 px-4 py-3 border-b border-blue-100 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                        {qr.scan_count.toLocaleString('pt-BR')}
+                      </div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400">
+                        {qr.scan_count === 0 ? 'nenhum scan' : qr.scan_count === 1 ? 'scan' : 'scans'}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                {/* Coluna das Informações */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <a
-                      href={`${appUrl}/${qr.short_id}`}
-                      target="_blank"
-                      className="font-mono text-blue-600 hover:underline text-sm truncate"
-                    >{`${appUrl.replace('https://', '').replace('http://', '')}/${qr.short_id}`}</a>
-                    <Button variant="ghost" size="icon" onClick={() => handleCopy(qr.short_id)}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-xs text-slate-500">URL Original:</p>
-                    <a href={qr.original_url} target="_blank" className="text-sm text-slate-700 hover:underline break-words">
-                      {qr.original_url}
-                    </a>
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {new Date(qr.created_at).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                      })}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{new Date(qr.created_at).getFullYear()}</div>
                   </div>
                 </div>
               </div>
-              <div className="border-t mt-4 pt-3 flex items-center justify-between">
-                <p className="text-xs text-slate-500">Criado em: {new Date(qr.created_at).toLocaleDateString('pt-BR')}</p>
-                <div className="flex items-center gap-1">
+
+              {/* Corpo do Card */}
+              <div className="p-4">
+                <div className="flex gap-4">
+                  {/* QR Code */}
+                  <div className="shrink-0">
+                    <div className="p-2 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-lg shadow-md">
+                      <QRCodeComponent value={getQrCodeUrl(qr)} size={80} quietZone={2} />
+                    </div>
+                  </div>
+
+                  {/* Informações */}
+                  <div className="flex-1 min-w-0 space-y-3">
+                    {/* Link Encurtado */}
+                    <div>
+                      <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                        Link Encurtado
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={getQrCodeUrl(qr)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline truncate"
+                        >
+                          {qr.custom_domains?.mode === 'routing' ? `${qr.custom_domains.domain}/${qr.short_id}` : qr.short_id}
+                        </a>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleCopy(qr)}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      {qr.custom_domains?.verified && (
+                        <div className="mt-1.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border ${
+                              qr.custom_domains.mode === 'routing'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                            }`}
+                          >
+                            {qr.custom_domains.mode === 'routing' ? '🌐' : '🏷️'}
+                            {qr.custom_domains.domain}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* URL Original */}
+                    <div>
+                      <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Destino</div>
+                      <a
+                        href={qr.original_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2"
+                      >
+                        {qr.original_url}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer com Ações */}
+              <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3">
+                <div className="flex items-center justify-between gap-2">
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(qr)}>
-                      <Pencil className="h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300"
+                      onClick={() => handleOpenEditModal(qr)}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                      Editar
                     </Button>
                   </DialogTrigger>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
+                    className="flex-1 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300"
                     onClick={() => handleDownload(qr.short_id)}
-                    className="flex items-center gap-1"
                   >
-                    <Download className="h-4 w-4" />
-                    <span>Baixar</span>
+                    <Download className="h-3.5 w-3.5 mr-1.5" />
+                    Baixar
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
+                    className="hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300"
                     onClick={() => handleDelete(qr.id)}
-                    className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -284,6 +504,28 @@ export default function QrCodeList({ qrcodes }: QrCodeListProps) {
             </Label>
             <Input id="new-url" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} className="col-span-3" />
           </div>
+
+          {/* Seleção de Domínio Customizado (Pro/Enterprise) */}
+          {customDomains.length > 0 && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-custom-domain" className="text-right">
+                Domínio
+              </Label>
+              <select
+                id="edit-custom-domain"
+                value={selectedDomainId || ''}
+                onChange={(e) => setSelectedDomainId(e.target.value ? Number(e.target.value) : null)}
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Domínio padrão</option>
+                {customDomains.map((domain) => (
+                  <option key={domain.id} value={domain.id}>
+                    {domain.domain}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <DialogClose asChild>

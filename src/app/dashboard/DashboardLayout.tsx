@@ -1,17 +1,31 @@
 'use client';
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import type { SubscriptionTier } from '@/lib/subscriptionTiers';
 import { Menu } from 'lucide-react';
 import DashboardSidebar from './DashboardSidebar';
 
 type DashboardLayoutProps = {
   user: {
     email?: string;
+    displayName?: string;
+    avatarUrl?: string;
   };
+  tier: SubscriptionTier;
+  qrCodeCount: number;
+  monthlyScans: number;
   children: React.ReactNode;
+  onProfileUpdated?: () => void;
 };
 
-export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  user,
+  tier,
+  qrCodeCount,
+  monthlyScans,
+  children,
+  onProfileUpdated,
+}: DashboardLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-slate-100 flex">
       {/* Main Content (Esquerda) */}
@@ -26,7 +40,13 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
               </button>
             </SheetTrigger>
             <SheetContent className="w-[300px] sm:w-[340px] p-0">
-              <DashboardSidebar user={user} />
+              <DashboardSidebar
+                user={user}
+                tier={tier}
+                qrCodeCount={qrCodeCount}
+                monthlyScans={monthlyScans}
+                onProfileUpdated={onProfileUpdated}
+              />
             </SheetContent>
           </Sheet>
         </header>
@@ -37,7 +57,13 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
 
       {/* Sidebar para Desktop (Direita) */}
       <div className="hidden md:block md:w-[300px] lg:w-[350px] border-l border-slate-200">
-        <DashboardSidebar user={user} />
+        <DashboardSidebar
+          user={user}
+          tier={tier}
+          qrCodeCount={qrCodeCount}
+          monthlyScans={monthlyScans}
+          onProfileUpdated={onProfileUpdated}
+        />
       </div>
     </div>
   );

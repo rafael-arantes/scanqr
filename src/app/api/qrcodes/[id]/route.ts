@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const { new_url } = await request.json();
+  const { new_url, custom_domain_id } = await request.json();
 
   // Validação simples
   if (!new_url) {
@@ -24,12 +24,50 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  // 1.1. Se custom_domain_id foi fornecido, validar
+  if (custom_domain_id) {
+    const { data: customDomain, error: domainError } = await supabase
+      .from('custom_domains')
+      .select('id, verified, user_id')
+      .eq('id', custom_domain_id)
+      .single();
+
+    if (domainError || !customDomain) {
+      return NextResponse.json({ error: 'Domínio customizado não encontrado' }, { status: 404 });
+    }
+
+    if (customDomain.user_id !== session.user.id) {
+      return NextResponse.json({ error: 'Você não tem permissão para usar este domínio' }, { status: 403 });
+    }
+
+    if (!customDomain.verified) {
+      return NextResponse.json({ error: 'Este domínio ainda não foi verificado' }, { status: 400 });
+    }
+  }
+
   // 2. Atualizar o QR Code no banco
   const { data, error } = await supabase
     .from('qrcodes')
-    .update({ original_url: new_url })
+    .update({
+      original_url: new_url,
+      custom_domain_id: custom_domain_id || null,
+    })
     .match({ id: id, user_id: session.user.id })
-    .select()
+    .select(
+      `
+      id, 
+      short_id, 
+      original_url, 
+      created_at, 
+      scan_count,
+      custom_domain_id,
+      custom_domains (
+        id,
+        domain,
+        verified
+      )
+    `
+    )
     .single();
 
   if (error) {

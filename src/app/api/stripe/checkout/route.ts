@@ -26,6 +26,8 @@ export async function POST(request: Request) {
     // Parse body
     const { tier } = await request.json();
 
+    console.log('[Stripe Checkout] Tier recebido:', tier);
+
     // Validar tier
     if (!tier || (tier !== 'pro' && tier !== 'enterprise')) {
       return NextResponse.json({ error: 'Tier inválido. Use "pro" ou "enterprise"' }, { status: 400 });
@@ -71,6 +73,10 @@ export async function POST(request: Request) {
 
     // Obter price_id do tier
     const priceId = getTierPrice(tier);
+
+    console.log('[Stripe Checkout] Tier:', tier, 'Price ID:', priceId);
+    console.log('[Stripe Checkout] STRIPE_PRICE_ID_PRO:', process.env.STRIPE_PRICE_ID_PRO);
+    console.log('[Stripe Checkout] STRIPE_PRICE_ID_ENTERPRISE:', process.env.STRIPE_PRICE_ID_ENTERPRISE);
 
     if (!priceId) {
       return NextResponse.json(

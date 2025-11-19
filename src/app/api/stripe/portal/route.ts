@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/stripe/portal
  * Cria uma sessão do Customer Portal para gerenciar assinatura
  */
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });

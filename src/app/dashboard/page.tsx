@@ -76,12 +76,10 @@ export default function DashboardPage() {
       console.error('Erro ao buscar QR Codes:', qrError);
     } else {
       // Transformar o array de custom_domains em objeto único
-      const transformedData = (qrcodesData || []).map((qr: any) => ({
+      const transformedData = (qrcodesData || []).map((qr) => ({
         ...qr,
-        custom_domains: Array.isArray(qr.custom_domains) && qr.custom_domains.length > 0 
-          ? qr.custom_domains[0] 
-          : null
-      }));
+        custom_domains: Array.isArray(qr.custom_domains) && qr.custom_domains.length > 0 ? qr.custom_domains[0] : null,
+      })) as QRCodeType[];
       setQrcodes(transformedData);
     }
 

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
   // ========================================
   const shortId = nanoid(8);
 
-  const { data, error } = await supabase
+  const { data: _data, error } = await supabase
     .from('qrcodes')
     .insert({
       original_url: url,

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     // Buscar perfil do usuário
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('id, email, display_name, stripe_customer_id, subscription_tier')
+      .select('id, display_name, stripe_customer_id, subscription_tier')
       .eq('id', session.user.id)
       .single();
 
@@ -42,6 +42,10 @@ export async function POST(request: Request) {
       console.error('Erro ao buscar perfil:', profileError);
       return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
     }
+
+    // Email vem do auth.users
+    const userEmail = session.user.email || '';
+    const userName = profile.display_name || userEmail.split('@')[0];
 
     // Verificar se usuário já tem esse tier ou superior
     if (profile.subscription_tier === tier) {
@@ -55,8 +59,8 @@ export async function POST(request: Request) {
     // Criar ou buscar Stripe Customer
     const customerId = await getOrCreateCustomer({
       userId: session.user.id,
-      email: profile.email,
-      name: profile.display_name || undefined,
+      email: userEmail,
+      name: userName,
       stripeCustomerId: profile.stripe_customer_id,
     });
 

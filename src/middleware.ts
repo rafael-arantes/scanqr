@@ -5,11 +5,31 @@ import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
+
+  // Proteção de staging - permite webhooks da Stripe
+  const hostname = req.headers.get('host') || '';
+  const isStaging = hostname.includes('staging.scanqr.com.br');
+  const isWebhook = req.nextUrl.pathname.startsWith('/api/stripe/webhook');
+
+  // Proteção por senha em staging (exceto webhooks)
+  if (isStaging && !isWebhook) {
+    const basicAuth = req.headers.get('authorization');
+    const stagingPassword = process.env.STAGING_PASSWORD;
+
+    if (stagingPassword && basicAuth !== `Basic ${btoa(`staging:${stagingPassword}`)}`) {
+      return new NextResponse('Authentication required', {
+        status: 401,
+        headers: {
+          'WWW-Authenticate': 'Basic realm="Staging Environment"',
+        },
+      });
+    }
+  }
+
   const supabase = createMiddlewareClient({ req, res });
   await supabase.auth.getSession();
 
   // Detectar se está acessando via domínio customizado
-  const hostname = req.headers.get('host') || '';
   const appDomain = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
 
   // Se não for o domínio principal, verificar se é um domínio customizado

@@ -115,8 +115,14 @@ export function getQrCodeUsagePercentage(tier: SubscriptionTier, currentCount: n
  * Retorna mensagem amigável sobre o status do limite
  */
 export function getQrCodeLimitMessage(tier: SubscriptionTier, currentCount: number): string {
-  const remaining = getRemainingQrCodes(tier, currentCount);
   const limits = getTierLimits(tier);
+
+  // Enterprise has unlimited QR codes
+  if (tier === 'enterprise') {
+    return 'QR Codes ilimitados';
+  }
+
+  const remaining = getRemainingQrCodes(tier, currentCount);
 
   if (remaining === 0) {
     return `Você atingiu o limite de ${

@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [displayName, setDisplayName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [monthlyScans, setMonthlyScans] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
@@ -86,7 +87,7 @@ export default function DashboardPage() {
     // Buscar perfil do usuário
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('subscription_tier, display_name, avatar_url, monthly_scans')
+      .select('subscription_tier, display_name, avatar_url, monthly_scans, role')
       .eq('id', session.user.id)
       .single();
 
@@ -94,6 +95,7 @@ export default function DashboardPage() {
     setDisplayName(profile?.display_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || '');
     setAvatarUrl(profile?.avatar_url || session.user.user_metadata?.avatar_url || '');
     setMonthlyScans(profile?.monthly_scans || 0);
+    setIsAdmin(profile?.role === 'admin');
     setIsLoading(false);
   };
 
@@ -105,6 +107,9 @@ export default function DashboardPage() {
     // Recarrega os dados após criar um novo QR Code
     fetchData();
   };
+
+  // Admin users get enterprise-level access
+  const effectiveTier: 'free' | 'pro' | 'enterprise' = isAdmin ? 'enterprise' : userTier;
 
   if (isLoading) {
     return (
@@ -121,22 +126,23 @@ export default function DashboardPage() {
         displayName: displayName,
         avatarUrl: avatarUrl,
       }}
-      tier={userTier}
+      tier={effectiveTier}
       qrCodeCount={qrcodes.length}
       monthlyScans={monthlyScans}
+      isAdmin={isAdmin}
       onProfileUpdated={fetchData}
     >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <h1 className="text-3xl font-bold">Meus QR Codes</h1>
-        <CreateQrCodeDialog tier={userTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
+        <CreateQrCodeDialog tier={effectiveTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
       </div>
 
       {qrcodes && qrcodes.length > 0 ? (
-        <QrCodeList qrcodes={qrcodes} userTier={userTier} />
+        <QrCodeList qrcodes={qrcodes} userTier={effectiveTier} />
       ) : (
         <div className="w-full mt-4 p-8 bg-slate-100 rounded-lg text-center">
           <p className="text-slate-500 mb-3">Você ainda não criou nenhum QR Code.</p>
-          <CreateQrCodeDialog tier={userTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
+          <CreateQrCodeDialog tier={effectiveTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
           <p className="text-slate-400 text-sm mt-4">
             Ou vá para a{' '}
             <Link href="/" className="underline">

@@ -14,6 +14,7 @@ type DashboardLayoutProps = {
   tier: SubscriptionTier;
   qrCodeCount: number;
   monthlyScans: number;
+  isAdmin?: boolean;
   children: React.ReactNode;
   onProfileUpdated?: () => void;
 };
@@ -23,6 +24,7 @@ export default function DashboardLayout({
   tier,
   qrCodeCount,
   monthlyScans,
+  isAdmin,
   children,
   onProfileUpdated,
 }: DashboardLayoutProps) {
@@ -45,6 +47,7 @@ export default function DashboardLayout({
                 tier={tier}
                 qrCodeCount={qrCodeCount}
                 monthlyScans={monthlyScans}
+                isAdmin={isAdmin}
                 onProfileUpdated={onProfileUpdated}
               />
             </SheetContent>
@@ -62,6 +65,7 @@ export default function DashboardLayout({
           tier={tier}
           qrCodeCount={qrCodeCount}
           monthlyScans={monthlyScans}
+          isAdmin={isAdmin}
           onProfileUpdated={onProfileUpdated}
         />
       </div>

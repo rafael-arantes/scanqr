@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
 import ManageSubscriptionButton from '@/components/stripe/ManageSubscriptionButton';
+import { Button } from '@/components/ui/button';
 import {
   getQrCodeLimitMessage,
   getQrCodeUsagePercentage,
@@ -8,8 +8,9 @@ import {
   getTierLimits,
   type SubscriptionTier,
 } from '@/lib/subscriptionTiers';
-import { Crown, Settings, TrendingUp, User, Zap } from 'lucide-react';
+import { Crown, Settings, Shield, TrendingUp, User, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { FeedbackDialog } from './FeedbackDialog';
 import LogoutButton from './LogoutButton';
 import ProfileDialog from './ProfileDialog';
 
@@ -23,10 +24,11 @@ type UserProps = {
   tier: SubscriptionTier;
   qrCodeCount: number;
   monthlyScans: number;
+  isAdmin?: boolean;
   onProfileUpdated?: () => void;
 };
 
-export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans, onProfileUpdated }: UserProps) {
+export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans, isAdmin, onProfileUpdated }: UserProps) {
   const limits = getTierLimits(tier);
   const qrUsagePercent = getQrCodeUsagePercentage(tier, qrCodeCount);
   const qrMessage = getQrCodeLimitMessage(tier, qrCodeCount);
@@ -42,15 +44,24 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
   };
 
   const getTierIcon = () => {
+    if (isAdmin) return Shield;
     if (tier === 'enterprise') return Crown;
     if (tier === 'pro') return Zap;
     return TrendingUp;
   };
 
   const getTierBadgeColor = () => {
+    if (isAdmin) return 'bg-orange-100 text-orange-700';
     if (tier === 'enterprise') return 'bg-purple-100 text-purple-700';
     if (tier === 'pro') return 'bg-blue-100 text-blue-700';
     return 'bg-slate-100 text-slate-700';
+  };
+
+  const getTierLabel = () => {
+    if (isAdmin) return 'Admin';
+    if (tier === 'enterprise') return 'Enterprise';
+    if (tier === 'pro') return 'Pro';
+    return 'Gratuito';
   };
 
   const TierIcon = getTierIcon();
@@ -89,7 +100,7 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
             <span className="text-sm font-medium text-slate-600">Plano Atual</span>
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getTierBadgeColor()}`}>
               <TierIcon className="h-3.5 w-3.5" />
-              {tier === 'free' ? 'Gratuito' : tier === 'pro' ? 'Pro' : 'Enterprise'}
+              {getTierLabel()}
             </div>
           </div>
 
@@ -193,6 +204,33 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
               Configurações de Perfil
             </button>
           </ProfileDialog>
+        </div>
+
+        {/* Admin Section */}
+        {isAdmin && (
+          <div className="pt-4 border-t border-slate-200 space-y-2">
+            <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-orange-700 bg-orange-50 rounded-md">
+              <Shield className="w-4 h-4" />
+              ADMINISTRAÇÃO
+            </div>
+            <Link
+              href="/dashboard/admin/users"
+              className="block text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors"
+            >
+              👥 Gerenciar Usuários
+            </Link>
+            <Link
+              href="/dashboard/admin/feedbacks"
+              className="block text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors"
+            >
+              💬 Feedbacks
+            </Link>
+          </div>
+        )}
+
+        {/* Feedback Section */}
+        <div className="pt-4 border-t border-slate-200">
+          <FeedbackDialog />
         </div>
       </div>
 

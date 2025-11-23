@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -43,6 +44,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminFeedbacksPage() {
+  const { toast } = useToast();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [filteredFeedbacks, setFilteredFeedbacks] = useState<Feedback[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +55,7 @@ export default function AdminFeedbacksPage() {
 
   useEffect(() => {
     fetchFeedbacks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, categoryFilter]);
 
   useEffect(() => {
@@ -82,7 +85,11 @@ export default function AdminFeedbacksPage() {
       if (!response.ok) {
         const data = await response.json();
         if (response.status === 403) {
-          alert('Você não tem permissão para acessar esta página');
+          toast({
+            title: 'Acesso negado',
+            description: 'Você não tem permissão para acessar esta página',
+            variant: 'destructive',
+          });
           window.location.href = '/dashboard';
           return;
         }
@@ -94,7 +101,11 @@ export default function AdminFeedbacksPage() {
       setFilteredFeedbacks(data.feedbacks);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
-      alert('Erro ao carregar feedbacks');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar feedbacks',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -115,19 +126,35 @@ export default function AdminFeedbacksPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'Erro ao atualizar feedback');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Erro ao atualizar feedback',
+          variant: 'destructive',
+        });
         return;
       }
 
       // Update local state
       setFeedbacks((prev) =>
-        prev.map((feedback) => (feedback.id === feedbackId ? { ...feedback, status: newStatus as any } : feedback))
+        prev.map((feedback) =>
+          feedback.id === feedbackId
+            ? { ...feedback, status: newStatus as 'pending' | 'in_review' | 'resolved' | 'dismissed' }
+            : feedback
+        )
       );
 
-      alert('Status atualizado com sucesso!');
+      toast({
+        title: 'Sucesso!',
+        description: 'Status atualizado com sucesso',
+        variant: 'success',
+      });
     } catch (error) {
       console.error('Error updating feedback:', error);
-      alert('Erro ao atualizar feedback');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar feedback',
+        variant: 'destructive',
+      });
     } finally {
       setUpdatingId(null);
     }

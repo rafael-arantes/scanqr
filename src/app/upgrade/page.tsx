@@ -2,6 +2,7 @@
 
 import UpgradeButton from '@/components/stripe/UpgradeButton';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { getTierLimits, type SubscriptionTier } from '@/lib/subscriptionTiers';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Check, Crown, X, Zap } from 'lucide-react';
@@ -10,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function UpgradePage() {
+  const { toast } = useToast();
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [currentTier, setCurrentTier] = useState<SubscriptionTier>('free');
@@ -92,7 +94,12 @@ export default function UpgradePage() {
     }
 
     // Para Pro, redirecionar para checkout (Stripe/Paddle será integrado depois)
-    alert('Integração com pagamento será implementada em breve!\n\nPor enquanto, este é um preview da página de upgrade.');
+    toast({
+      title: 'Em desenvolvimento',
+      description:
+        'Integração com pagamento será implementada em breve!\n\nPor enquanto, este é um preview da página de upgrade.',
+      variant: 'default',
+    });
     // Futuro: router.push('/checkout?plan=pro');
   };
 

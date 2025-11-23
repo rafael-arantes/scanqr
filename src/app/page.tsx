@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart3, Crown, Download, Globe, LineChart, Link2, Sparkles, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { QRCode as QRCodeComponent } from 'react-qrcode-logo';
 
 export default function HomePage() {
+  const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [qrValue, setQrValue] = useState('');
   const [shorten, setShorten] = useState(true); // Ativado por padrão para promover o produto
@@ -29,6 +31,7 @@ export default function HomePage() {
       setIsAuthenticated(!!session);
     };
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGenerateQrCode = async () => {
@@ -55,7 +58,11 @@ export default function HomePage() {
         } else {
           // Tratamento de erros específicos
           if (response.status === 401) {
-            alert('Você precisa estar logado para encurtar URLs. Redirecionando...');
+            toast({
+              title: 'Erro',
+              description: 'Você precisa estar logado para encurtar URLs. Redirecionando...',
+              variant: 'destructive',
+            });
             window.location.href = '/login';
           } else if (response.status === 403 && data.upgrade_required) {
             // Limite atingido - mostrar mensagem amigável com opção de upgrade
@@ -64,11 +71,19 @@ export default function HomePage() {
               window.location.href = '/upgrade'; // Redireciona para página de upgrade (criar depois)
             }
           } else {
-            alert(data.error || 'Ocorreu um erro.');
+            toast({
+              title: 'Erro',
+              description: data.error || 'Ocorreu um erro.',
+              variant: 'destructive',
+            });
           }
         }
       } catch (_error) {
-        alert('Falha na comunicação com o servidor.');
+        toast({
+          title: 'Erro',
+          description: 'Falha na comunicação com o servidor.',
+          variant: 'destructive',
+        });
       }
     } else {
       // Se não, apenas usa a URL original
@@ -112,7 +127,11 @@ export default function HomePage() {
       document.body.removeChild(downloadLink);
     } catch (err) {
       console.error(err);
-      alert('Não foi possível gerar o QR Code para download.');
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível gerar o QR Code para download.',
+        variant: 'destructive',
+      });
     }
   };
 

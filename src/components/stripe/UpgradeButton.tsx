@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 interface UpgradeButtonProps {
@@ -11,6 +12,7 @@ interface UpgradeButtonProps {
 }
 
 export default function UpgradeButton({ tier, children, className, variant = 'default' }: UpgradeButtonProps) {
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUpgrade = async () => {
@@ -26,7 +28,11 @@ export default function UpgradeButton({ tier, children, className, variant = 'de
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'Erro ao processar upgrade');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Erro ao processar upgrade',
+          variant: 'destructive',
+        });
         setIsLoading(false);
         return;
       }
@@ -37,7 +43,11 @@ export default function UpgradeButton({ tier, children, className, variant = 'de
       }
     } catch (error) {
       console.error('Erro ao iniciar checkout:', error);
-      alert('Erro ao processar upgrade. Tente novamente.');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao processar upgrade. Tente novamente.',
+        variant: 'destructive',
+      });
       setIsLoading(false);
     }
   };

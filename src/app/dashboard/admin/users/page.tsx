@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2, Search, Shield, ShieldOff } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -17,6 +18,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +47,11 @@ export default function AdminUsersPage() {
       if (!response.ok) {
         const data = await response.json();
         if (response.status === 403) {
-          alert('Você não tem permissão para acessar esta página');
+          toast({
+            title: 'Acesso negado',
+            description: 'Você não tem permissão para acessar esta página',
+            variant: 'destructive',
+          });
           window.location.href = '/dashboard';
           return;
         }
@@ -57,7 +63,11 @@ export default function AdminUsersPage() {
       setFilteredUsers(data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
-      alert('Erro ao carregar usuários');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar usuários',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -83,17 +93,29 @@ export default function AdminUsersPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'Erro ao atualizar permissões');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Erro ao atualizar permissões',
+          variant: 'destructive',
+        });
         return;
       }
 
       // Update local state
       setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, role: data.user.role } : user)));
 
-      alert('Permissões atualizadas com sucesso!');
+      toast({
+        title: 'Sucesso!',
+        description: 'Permissões atualizadas com sucesso',
+        variant: 'success',
+      });
     } catch (error) {
       console.error('Error toggling role:', error);
-      alert('Erro ao atualizar permissões');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar permissões',
+        variant: 'destructive',
+      });
     } finally {
       setTogglingUserId(null);
     }

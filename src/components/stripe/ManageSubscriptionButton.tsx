@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,6 +18,7 @@ export default function ManageSubscriptionButton({
   variant = 'outline',
   showIcon = true,
 }: ManageSubscriptionButtonProps) {
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleManage = async () => {
@@ -30,7 +32,11 @@ export default function ManageSubscriptionButton({
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'Erro ao abrir portal de gerenciamento');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Erro ao abrir portal de gerenciamento',
+          variant: 'destructive',
+        });
         setIsLoading(false);
         return;
       }
@@ -41,7 +47,11 @@ export default function ManageSubscriptionButton({
       }
     } catch (error) {
       console.error('Erro ao abrir portal:', error);
-      alert('Erro ao abrir portal de gerenciamento. Tente novamente.');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao abrir portal de gerenciamento. Tente novamente.',
+        variant: 'destructive',
+      });
       setIsLoading(false);
     }
   };

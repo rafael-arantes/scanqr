@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Crown, Mail, TrendingUp, User, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -25,6 +26,7 @@ type ProfileDialogProps = {
 };
 
 export default function ProfileDialog({ children, onProfileUpdated }: ProfileDialogProps) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,15 +94,11 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
 
       if (error) throw error;
 
-      // Show success notification
-      const notification = document.createElement('div');
-      notification.className =
-        'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-bottom-5';
-      notification.textContent = '✓ Perfil atualizado com sucesso!';
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
+      toast({
+        title: 'Sucesso',
+        description: 'Perfil atualizado com sucesso!',
+        variant: 'success',
+      });
 
       // Notificar componente pai para recarregar dados
       if (onProfileUpdated) {
@@ -110,7 +108,11 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
       setOpen(false);
     } catch (error) {
       console.error('Erro ao salvar perfil:', error);
-      alert('Erro ao salvar perfil. Tente novamente.');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar perfil. Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }

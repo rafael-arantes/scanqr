@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { canCreateQrCode, getQrCodeLimitMessage, type SubscriptionTier } from '@/lib/subscriptionTiers';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Globe, Plus } from 'lucide-react';
@@ -31,6 +32,7 @@ type CreateQrCodeDialogProps = {
 };
 
 export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreated }: CreateQrCodeDialogProps) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +68,11 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
 
   const handleCreate = async () => {
     if (!url) {
-      alert('Por favor, insira uma URL válida');
+      toast({
+        title: 'URL obrigatória',
+        description: 'Por favor, insira uma URL válida',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -84,7 +90,11 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
       const data = await response.json();
 
       if (response.ok) {
-        alert(`QR Code criado com sucesso!\n\nURL: ${data.shortUrl}`);
+        toast({
+          title: 'QR Code criado!',
+          description: `URL: ${data.shortUrl}`,
+          variant: 'success',
+        });
         setUrl(''); // Limpa o input
         setOpen(false); // Fecha o modal
         onQrCodeCreated?.(); // Notifica o componente pai para atualizar a lista
@@ -96,12 +106,20 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
             window.location.href = '/upgrade';
           }
         } else {
-          alert(data.error || 'Erro ao criar QR Code');
+          toast({
+            title: 'Erro',
+            description: data.error || 'Erro ao criar QR Code',
+            variant: 'destructive',
+          });
         }
       }
     } catch (error) {
       console.error('Erro ao criar QR Code:', error);
-      alert('Falha na comunicação com o servidor.');
+      toast({
+        title: 'Erro',
+        description: 'Falha na comunicação com o servidor.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

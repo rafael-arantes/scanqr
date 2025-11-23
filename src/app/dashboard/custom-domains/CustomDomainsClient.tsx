@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import type { SubscriptionTier } from '@/lib/subscriptionTiers';
 import { canAddCustomDomain, getCustomDomainLimitMessage } from '@/lib/subscriptionTiers';
 import type { CustomDomainStats } from '@/types/customDomains';
@@ -18,6 +19,7 @@ interface CustomDomainsPageProps {
 }
 
 export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomainsPageProps) {
+  const { toast } = useToast();
   const router = useRouter();
   const [domains, setDomains] = useState<CustomDomainStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,16 +69,28 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
         setShowAddDialog(false);
         setNewDomain('');
         setNewDomainMode('branding');
-        alert('Domínio adicionado! Configure os registros DNS para verificação.');
+        toast({
+          title: 'Sucesso',
+          description: 'Domínio adicionado! Configure os registros DNS para verificação.',
+          variant: 'success',
+        });
       } else if (response.status === 403 && data.upgrade_required) {
         if (confirm(`${data.message}\n\nDeseja fazer upgrade agora?`)) {
           router.push('/upgrade');
         }
       } else {
-        alert(data.error || 'Falha ao adicionar domínio');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Falha ao adicionar domínio',
+          variant: 'destructive',
+        });
       }
     } catch (_error) {
-      alert('Erro ao comunicar com o servidor');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao comunicar com o servidor',
+        variant: 'destructive',
+      });
     }
     setIsAdding(false);
   };
@@ -90,7 +104,11 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
       const data = await response.json();
 
       if (response.ok) {
-        alert('✅ Domínio verificado com sucesso!');
+        toast({
+          title: 'Sucesso',
+          description: 'Domínio verificado com sucesso!',
+          variant: 'success',
+        });
         fetchDomains();
       } else {
         // Mostrar mensagem detalhada da API
@@ -98,21 +116,26 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
 
         if (data.expected_record) {
           // Mostrar detalhes do registro esperado
-          alert(
-            `❌ ${errorMsg}\n\n` +
-              `Configure o registro DNS:\n` +
-              `Tipo: ${data.expected_record.type}\n` +
-              `Nome: ${data.expected_record.name}\n` +
-              `Valor: ${data.expected_record.value}\n\n` +
-              `Dica: A propagação DNS pode levar de 15 minutos a 48 horas.`
-          );
+          toast({
+            title: 'Falha na verificação',
+            description: `${errorMsg}\n\nConfigure o registro DNS:\nTipo: ${data.expected_record.type}\nNome: ${data.expected_record.name}\nValor: ${data.expected_record.value}\n\nDica: A propagação DNS pode levar de 15 minutos a 48 horas.`,
+            variant: 'destructive',
+          });
         } else {
-          alert(`❌ ${errorMsg}`);
+          toast({
+            title: 'Erro',
+            description: errorMsg,
+            variant: 'destructive',
+          });
         }
       }
     } catch (error) {
       console.error('Erro ao verificar domínio:', error);
-      alert('❌ Erro de comunicação com o servidor. Tente novamente.');
+      toast({
+        title: 'Erro',
+        description: 'Erro de comunicação com o servidor. Tente novamente.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -132,18 +155,34 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
 
       if (response.ok) {
         setDomains(domains.filter((d) => d.id !== domainId));
-        alert('Domínio removido com sucesso');
+        toast({
+          title: 'Sucesso',
+          description: 'Domínio removido com sucesso',
+          variant: 'success',
+        });
       } else {
-        alert('Falha ao remover domínio');
+        toast({
+          title: 'Erro',
+          description: 'Falha ao remover domínio',
+          variant: 'destructive',
+        });
       }
     } catch (_error) {
-      alert('Erro ao remover domínio');
+      toast({
+        title: 'Erro',
+        description: 'Erro ao remover domínio',
+        variant: 'destructive',
+      });
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Copiado para a área de transferência!');
+    toast({
+      title: 'Copiado',
+      description: 'Copiado para a área de transferência!',
+      variant: 'success',
+    });
   };
 
   if (tier === 'free') {

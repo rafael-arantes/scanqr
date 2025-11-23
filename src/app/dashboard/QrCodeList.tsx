@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart3, Copy, Download, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import QRCodeGenerator from 'qrcode';
@@ -48,6 +49,7 @@ type QrCodeListProps = {
 };
 
 export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
+  const { toast } = useToast();
   const [codes, setCodes] = useState(qrcodes);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const supabase = createClientComponentClient();
@@ -63,12 +65,16 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   // Domínio selecionado para o QR code
   const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
+  // Estado para controlar o dialog de confirmação de exclusão
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [qrToDelete, setQrToDelete] = useState<number | null>(null);
 
   // Carregar domínios customizados se for Pro ou Enterprise
   useEffect(() => {
     if (userTier === 'pro' || userTier === 'enterprise') {
       loadCustomDomains();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userTier]);
 
   const loadCustomDomains = async () => {
@@ -112,23 +118,42 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
     }, 2000);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja apagar este QR Code?')) {
-      return;
-    }
+  const confirmDelete = (id: number) => {
+    setQrToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (qrToDelete === null) return;
+
+    setDeleteConfirmOpen(false);
     try {
-      const response = await fetch(`/api/qrcodes/${id}`, {
+      const response = await fetch(`/api/qrcodes/${qrToDelete}`, {
         method: 'DELETE',
       });
       if (response.ok) {
-        setCodes((currentCodes) => currentCodes.filter((code) => code.id !== id));
-        alert('QR Code apagado com sucesso!');
+        setCodes((currentCodes) => currentCodes.filter((code) => code.id !== qrToDelete));
+        toast({
+          title: 'QR Code apagado!',
+          description: 'QR Code removido com sucesso',
+          variant: 'success',
+        });
       } else {
         const data = await response.json();
-        alert(data.error || 'Falha ao apagar o QR Code.');
+        toast({
+          title: 'Erro',
+          description: data.error || 'Falha ao apagar o QR Code.',
+          variant: 'destructive',
+        });
       }
     } catch (_error) {
-      alert('Ocorreu um erro de comunicação com o servidor.');
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro de comunicação com o servidor.',
+        variant: 'destructive',
+      });
+    } finally {
+      setQrToDelete(null);
     }
   };
 
@@ -152,7 +177,11 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
       document.body.removeChild(downloadLink);
     } catch (err) {
       console.error(err);
-      alert('Não foi possível gerar o QR Code para download.');
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível gerar o QR Code para download.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -181,14 +210,26 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
 
         // Atualiza a lista na tela sem precisar recarregar a página
         setCodes((currentCodes) => currentCodes.map((code) => (code.id === updatedQr.id ? updatedQr : code)));
-        alert('URL atualizada com sucesso!');
+        toast({
+          title: 'URL atualizada!',
+          description: 'URL do QR Code atualizada com sucesso',
+          variant: 'success',
+        });
         setEditingQr(null); // Fecha o modal
       } else {
         const data = await response.json();
-        alert(`Falha ao atualizar: ${data.error || 'Erro desconhecido'}`);
+        toast({
+          title: 'Erro',
+          description: `Falha ao atualizar: ${data.error || 'Erro desconhecido'}`,
+          variant: 'destructive',
+        });
       }
     } catch (_error) {
-      alert('Ocorreu um erro de comunicação com o servidor.');
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro de comunicação com o servidor.',
+        variant: 'destructive',
+      });
     }
     setIsUpdating(false);
   };
@@ -338,7 +379,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
-                          onClick={() => handleDelete(qr.id)}
+                          onClick={() => confirmDelete(qr.id)}
                           title="Excluir QR Code"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -474,7 +515,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                     variant="outline"
                     size="icon"
                     className="hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300"
-                    onClick={() => handleDelete(qr.id)}
+                    onClick={() => confirmDelete(qr.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -538,6 +579,31 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* ===== DIALOG DE CONFIRMAÇÃO DE EXCLUSÃO ===== */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>Tem certeza que deseja apagar este QR Code? Esta ação não pode ser desfeita.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 md:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setQrToDelete(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

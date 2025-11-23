@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/admin/users - List all users (admin only)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = createRouteHandlerClient({ cookies });
 
@@ -64,8 +64,8 @@ export async function PATCH(request: NextRequest) {
         },
         { status: 200 }
       );
-    } catch (error: any) {
-      if (error.message === 'Cannot modify your own role') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Cannot modify your own role') {
         return NextResponse.json({ error: 'Você não pode modificar suas próprias permissões' }, { status: 400 });
       }
       throw error;

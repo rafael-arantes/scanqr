@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,6 +15,7 @@ const categories = [
 ];
 
 export function FeedbackDialog() {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [category, setCategory] = useState('suggestion');
@@ -52,8 +54,11 @@ export function FeedbackDialog() {
       setCategory('suggestion');
       setIsOpen(false);
 
-      // Show success message (you could use a toast notification here)
-      alert('Feedback enviado com sucesso! Obrigado pela sua contribuição.');
+      toast({
+        title: 'Feedback enviado!',
+        description: 'Obrigado pela sua contribuição.',
+        variant: 'success',
+      });
     } catch (err) {
       console.error('Error submitting feedback:', err);
       setError('Erro ao enviar feedback. Tente novamente.');

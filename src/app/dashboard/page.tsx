@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const supabase = createClientComponentClient();
   const [qrcodes, setQrcodes] = useState<QRCodeType[]>([]);
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'enterprise'>('free');
-  const [userId, setUserId] = useState<string>('');
+  const [_userId, setUserId] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
   const [displayName, setDisplayName] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -101,6 +101,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleQrCodeCreated = () => {

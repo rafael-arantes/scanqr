@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [monthlyScans, setMonthlyScans] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
@@ -87,7 +88,7 @@ export default function DashboardPage() {
     // Buscar perfil do usuário
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('subscription_tier, display_name, avatar_url, monthly_scans, role')
+      .select('subscription_tier, display_name, avatar_url, monthly_scans, role, stripe_customer_id')
       .eq('id', session.user.id)
       .single();
 
@@ -96,6 +97,7 @@ export default function DashboardPage() {
     setAvatarUrl(profile?.avatar_url || session.user.user_metadata?.avatar_url || '');
     setMonthlyScans(profile?.monthly_scans || 0);
     setIsAdmin(profile?.role === 'admin');
+    setStripeCustomerId(profile?.stripe_customer_id || null);
     setIsLoading(false);
   };
 
@@ -131,6 +133,7 @@ export default function DashboardPage() {
       qrCodeCount={qrcodes.length}
       monthlyScans={monthlyScans}
       isAdmin={isAdmin}
+      stripeCustomerId={stripeCustomerId}
       onProfileUpdated={fetchData}
     >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">

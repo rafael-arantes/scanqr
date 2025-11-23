@@ -10,6 +10,8 @@ interface ManageSubscriptionButtonProps {
   className?: string;
   variant?: 'default' | 'outline' | 'ghost' | 'link';
   showIcon?: boolean;
+  tier?: 'free' | 'pro' | 'enterprise';
+  hasStripeCustomer?: boolean;
 }
 
 export default function ManageSubscriptionButton({
@@ -17,9 +19,18 @@ export default function ManageSubscriptionButton({
   className,
   variant = 'outline',
   showIcon = true,
+  tier,
+  hasStripeCustomer = true,
 }: ManageSubscriptionButtonProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Não mostrar botão se:
+  // 1. Não tem Stripe customer (nunca assinou)
+  // 2. É Enterprise (geralmente via contrato direto, não Stripe)
+  if (!hasStripeCustomer || tier === 'enterprise') {
+    return null;
+  }
 
   const handleManage = async () => {
     setIsLoading(true);

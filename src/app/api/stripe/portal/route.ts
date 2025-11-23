@@ -36,7 +36,14 @@ export async function POST() {
     }
 
     if (!profile.stripe_customer_id) {
-      return NextResponse.json({ error: 'Você ainda não tem uma assinatura ativa' }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Nenhuma assinatura encontrada',
+          message: 'Você ainda não possui uma assinatura ativa. Faça upgrade para gerenciar sua assinatura.',
+          upgrade_required: true,
+        },
+        { status: 400 }
+      );
     }
 
     // URL de retorno

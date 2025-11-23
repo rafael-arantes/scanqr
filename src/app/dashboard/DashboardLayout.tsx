@@ -15,6 +15,7 @@ type DashboardLayoutProps = {
   qrCodeCount: number;
   monthlyScans: number;
   isAdmin?: boolean;
+  stripeCustomerId?: string | null;
   children: React.ReactNode;
   onProfileUpdated?: () => void;
 };
@@ -25,6 +26,7 @@ export default function DashboardLayout({
   qrCodeCount,
   monthlyScans,
   isAdmin,
+  stripeCustomerId,
   children,
   onProfileUpdated,
 }: DashboardLayoutProps) {
@@ -48,6 +50,7 @@ export default function DashboardLayout({
                 qrCodeCount={qrCodeCount}
                 monthlyScans={monthlyScans}
                 isAdmin={isAdmin}
+                stripeCustomerId={stripeCustomerId}
                 onProfileUpdated={onProfileUpdated}
               />
             </SheetContent>
@@ -66,6 +69,7 @@ export default function DashboardLayout({
           qrCodeCount={qrCodeCount}
           monthlyScans={monthlyScans}
           isAdmin={isAdmin}
+          stripeCustomerId={stripeCustomerId}
           onProfileUpdated={onProfileUpdated}
         />
       </div>

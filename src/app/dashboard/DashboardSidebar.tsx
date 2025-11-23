@@ -25,10 +25,19 @@ type UserProps = {
   qrCodeCount: number;
   monthlyScans: number;
   isAdmin?: boolean;
+  stripeCustomerId?: string | null;
   onProfileUpdated?: () => void;
 };
 
-export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans, isAdmin, onProfileUpdated }: UserProps) {
+export default function DashboardSidebar({
+  user,
+  tier,
+  qrCodeCount,
+  monthlyScans,
+  isAdmin,
+  stripeCustomerId,
+  onProfileUpdated,
+}: UserProps) {
   const limits = getTierLimits(tier);
   const qrUsagePercent = getQrCodeUsagePercentage(tier, qrCodeCount);
   const qrMessage = getQrCodeLimitMessage(tier, qrCodeCount);
@@ -164,7 +173,12 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
             </Link>
           ) : (
             <div className="space-y-2">
-              <ManageSubscriptionButton className="w-full" variant="outline" />
+              <ManageSubscriptionButton
+                className="w-full"
+                variant="outline"
+                tier={tier}
+                hasStripeCustomer={!!stripeCustomerId}
+              />
               {tier !== 'enterprise' && (
                 <Link href="/upgrade" className="block">
                   <Button className="w-full" variant="ghost" size="sm">

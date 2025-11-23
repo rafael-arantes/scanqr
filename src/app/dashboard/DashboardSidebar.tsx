@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import ManageSubscriptionButton from '@/components/stripe/ManageSubscriptionButton';
 import {
   getQrCodeLimitMessage,
   getQrCodeUsagePercentage,
@@ -139,17 +140,28 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
             <p className="text-xs text-slate-600">{scansMessage}</p>
           </div>
 
-          {/* Botão de Upgrade */}
-          {tier !== 'enterprise' && (
+          {/* Botão de Upgrade ou Gerenciar Assinatura */}
+          {tier === 'free' ? (
             <Link href="/upgrade" className="block">
               <Button
                 className="w-full"
                 variant={qrUsagePercent >= 80 || scansUsagePercent >= 80 ? 'default' : 'outline'}
                 size="sm"
               >
-                {tier === 'free' ? 'Fazer Upgrade' : 'Ver Planos'}
+                Fazer Upgrade
               </Button>
             </Link>
+          ) : (
+            <div className="space-y-2">
+              <ManageSubscriptionButton className="w-full" variant="outline" />
+              {tier !== 'enterprise' && (
+                <Link href="/upgrade" className="block">
+                  <Button className="w-full" variant="ghost" size="sm">
+                    Ver Outros Planos
+                  </Button>
+                </Link>
+              )}
+            </div>
           )}
         </div>
 

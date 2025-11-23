@@ -91,8 +91,8 @@ export default function DashboardPage() {
       .single();
 
     setUserTier(profile?.subscription_tier || 'free');
-    setDisplayName(profile?.display_name || '');
-    setAvatarUrl(profile?.avatar_url || '');
+    setDisplayName(profile?.display_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || '');
+    setAvatarUrl(profile?.avatar_url || session.user.user_metadata?.avatar_url || '');
     setMonthlyScans(profile?.monthly_scans || 0);
     setIsLoading(false);
   };

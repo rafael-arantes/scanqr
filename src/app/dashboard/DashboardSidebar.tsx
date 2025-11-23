@@ -55,7 +55,7 @@ export default function DashboardSidebar({ user, tier, qrCodeCount, monthlyScans
   const TierIcon = getTierIcon();
 
   return (
-    <aside className="w-full h-full bg-slate-50 p-6 flex flex-col">
+    <aside className="w-full h-full bg-slate-50 p-6 flex flex-col overflow-y-auto">
       <div className="flex-1 space-y-6">
         <h2 className="text-xl font-semibold">Minha Conta</h2>
 

@@ -58,8 +58,11 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
         .single();
 
       if (profile) {
-        setDisplayName(profile.display_name || '');
-        setAvatarUrl(profile.avatar_url || '');
+        // Pré-preencher com dados do Google se não tiver no perfil
+        setDisplayName(
+          profile.display_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name || ''
+        );
+        setAvatarUrl(profile.avatar_url || session.user.user_metadata?.avatar_url || '');
         setTier(profile.subscription_tier);
       }
     } catch (error) {
@@ -82,7 +85,8 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
         .from('user_profiles')
         .update({
           display_name: displayName || null,
-          avatar_url: avatarUrl || null,
+          // Avatar URL não é mais editável pelo usuário
+          // Mantém o valor atual do Google
         })
         .eq('id', userId);
 
@@ -175,7 +179,7 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
                   <Link href="/upgrade">
                     <Button
                       size="sm"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     >
                       <TrendingUp className="w-4 h-4 mr-1.5" />
                       Upgrade
@@ -219,36 +223,27 @@ export default function ProfileDialog({ children, onProfileUpdated }: ProfileDia
               <p className="text-xs text-slate-500 dark:text-slate-400">{displayName.length}/50 caracteres</p>
             </div>
 
-            {/* Avatar URL */}
-            <div className="space-y-2">
-              <Label htmlFor="avatarUrl" className="text-sm font-semibold">
-                URL do Avatar
-              </Label>
-              <Input
-                id="avatarUrl"
-                type="url"
-                placeholder="https://exemplo.com/sua-foto.jpg"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-              />
-              {avatarUrl && (
-                <div className="flex items-center gap-3 mt-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+            {/* Avatar Preview (somente visualização) */}
+            {avatarUrl && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Avatar</Label>
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatarUrl}
-                    alt="Preview do avatar"
+                    alt="Avatar"
                     className="w-12 h-12 rounded-full object-cover border-2 border-slate-300 dark:border-slate-600"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/48?text=?';
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                   <div className="text-xs text-slate-600 dark:text-slate-400">
-                    <p className="font-medium">Preview do Avatar</p>
-                    <p>Certifique-se de que a URL é válida e pública</p>
+                    <p className="font-medium">Foto da conta Google</p>
+                    <p>Atualizada automaticamente quando você faz login</p>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 

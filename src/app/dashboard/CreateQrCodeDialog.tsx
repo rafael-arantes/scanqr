@@ -35,6 +35,7 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
+  const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
@@ -83,6 +84,7 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url,
+          name: name.trim() || null,
           custom_domain_id: selectedDomainId,
         }),
       });
@@ -96,6 +98,8 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
           variant: 'success',
         });
         setUrl(''); // Limpa o input
+        setName(''); // Limpa o nome
+        setSelectedDomainId(null); // Limpa o domínio
         setOpen(false); // Fecha o modal
         onQrCodeCreated?.(); // Notifica o componente pai para atualizar a lista
       } else {
@@ -154,6 +158,21 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Nome do QR Code (Opcional)</Label>
+            <Input
+              id="name"
+              placeholder="Ex: Link Instagram, Cardápio, Site..."
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">
+              Dê um nome para organizar seus QR Codes {name.length > 0 && `(${name.length}/100)`}
+            </p>
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="url">URL de Destino</Label>
             <Input

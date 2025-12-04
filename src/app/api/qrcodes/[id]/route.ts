@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const { new_url, custom_domain_id } = await request.json();
+  const { new_url, name, custom_domain_id } = await request.json();
 
   // Validação simples
   if (!new_url) {
@@ -51,20 +51,23 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     .update({
       original_url: new_url,
       custom_domain_id: custom_domain_id || null,
+      ...(name !== undefined && { name: name || null }),
     })
     .match({ id: id, user_id: session.user.id })
     .select(
       `
       id, 
       short_id, 
-      original_url, 
+      original_url,
+      name,
       created_at, 
       scan_count,
       custom_domain_id,
       custom_domains (
         id,
         domain,
-        verified
+        verified,
+        mode
       )
     `
     )

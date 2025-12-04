@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const { url, custom_domain_id } = await request.json();
+  const { url, name, custom_domain_id } = await request.json();
 
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       short_id: shortId,
       user_id: session.user.id, // Associa o QR Code ao usuário logado
       custom_domain_id: custom_domain_id || null, // Associa domínio customizado se fornecido
+      name: name || null, // Nome opcional para organização
     })
     .select()
     .single();

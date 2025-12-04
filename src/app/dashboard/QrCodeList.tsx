@@ -11,11 +11,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { BarChart3, Copy, Download, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { BarChart3, ChevronDown, Copy, Download, ExternalLink, FileImage, Pencil, Trash2 } from 'lucide-react';
 import QRCodeGenerator from 'qrcode';
 import { useEffect, useState } from 'react';
 import { QRCode as QRCodeComponent } from 'react-qrcode-logo';
@@ -32,6 +33,7 @@ type QRCodeType = {
   id: number;
   short_id: string;
   original_url: string;
+  name: string | null;
   created_at: string;
   scan_count: number;
   custom_domain_id: number | null;
@@ -54,11 +56,18 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const supabase = createClientComponentClient();
 
+  // Atualizar codes quando qrcodes mudar (ex: filtros aplicados)
+  useEffect(() => {
+    setCodes(qrcodes);
+  }, [qrcodes]);
+
   // === NOVOS ESTADOS PARA O MODAL ===
   // Armazena o QR Code que está sendo editado no momento
   const [editingQr, setEditingQr] = useState<QRCodeType | null>(null);
   // Armazena o valor da nova URL que o usuário digita no input
   const [newUrl, setNewUrl] = useState('');
+  // Armazena o nome do QR Code sendo editado
+  const [editingName, setEditingName] = useState('');
   // Estado para controlar o loading do botão de salvar
   const [isUpdating, setIsUpdating] = useState(false);
   // Domínios customizados disponíveis
@@ -175,6 +184,12 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
+
+      toast({
+        title: 'Download concluído',
+        description: 'QR Code salvo em PNG',
+        variant: 'success',
+      });
     } catch (err) {
       console.error(err);
       toast({
@@ -185,9 +200,50 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
     }
   };
 
+  const handleDownloadSVG = async (shortId: string) => {
+    try {
+      const urlToDownload = `${appUrl}/${shortId}`;
+
+      // Gera o SVG como string
+      const svgString = await QRCodeGenerator.toString(urlToDownload, {
+        type: 'svg',
+        width: 1024,
+        margin: 2,
+        errorCorrectionLevel: 'H',
+      });
+
+      // Cria um blob do SVG
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      // Cria link de download
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = `${shortId}.svg`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Download concluído',
+        description: 'QR Code salvo em SVG',
+        variant: 'success',
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível gerar o QR Code SVG.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleOpenEditModal = (qr: QRCodeType) => {
     setEditingQr(qr); // Define qual QR Code estamos editando
     setNewUrl(qr.original_url); // Preenche o input com a URL atual
+    setEditingName(qr.name || ''); // Preenche o nome atual
     setSelectedDomainId(qr.custom_domain_id); // Preenche o domínio atual
   };
 
@@ -201,6 +257,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           new_url: newUrl,
+          name: editingName.trim() || null,
           custom_domain_id: selectedDomainId,
         }),
       });
@@ -209,10 +266,21 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
         const updatedQr = await response.json();
 
         // Atualiza a lista na tela sem precisar recarregar a página
-        setCodes((currentCodes) => currentCodes.map((code) => (code.id === updatedQr.id ? updatedQr : code)));
+        setCodes((currentCodes) =>
+          currentCodes.map((code) =>
+            code.id === updatedQr.id
+              ? {
+                  ...updatedQr,
+                  custom_domains: Array.isArray(updatedQr.custom_domains)
+                    ? updatedQr.custom_domains[0]
+                    : updatedQr.custom_domains,
+                }
+              : code
+          )
+        );
         toast({
-          title: 'URL atualizada!',
-          description: 'URL do QR Code atualizada com sucesso',
+          title: 'QR Code atualizado!',
+          description: 'Informações atualizadas com sucesso',
           variant: 'success',
         });
         setEditingQr(null); // Fecha o modal
@@ -244,7 +312,7 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
               <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                    QR Code
+                    Nome
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     Link Encurtado
@@ -267,8 +335,14 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                 {codes.map((qr) => (
                   <tr key={qr.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="p-2 bg-white dark:bg-slate-900 inline-block border-2 border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                        <QRCodeComponent value={getQrCodeUrl(qr)} size={64} quietZone={2} />
+                      <div className="flex flex-col max-w-[200px]">
+                        <span
+                          className="font-medium text-slate-900 dark:text-slate-100 truncate"
+                          title={qr.name || 'Sem nome'}
+                        >
+                          {qr.name || <span className="text-slate-400 italic">Sem nome</span>}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">ID: {qr.short_id}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -366,15 +440,39 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
-                          onClick={() => handleDownload(qr.short_id)}
-                          title="Baixar QR Code"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+
+                        {/* Dropdown para Download PNG/SVG */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
+                              title="Baixar QR Code"
+                            >
+                              <Download className="h-4 w-4" />
+                              <ChevronDown className="h-3 w-3 ml-0.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDownload(qr.short_id)}>
+                              <FileImage className="h-4 w-4 mr-2" />
+                              Baixar PNG
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownloadSVG(qr.short_id)}>
+                              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                />
+                              </svg>
+                              Baixar SVG
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -403,18 +501,21 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
               {/* Header do Card */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 px-4 py-3 border-b border-blue-100 dark:border-blue-800">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                        {qr.scan_count.toLocaleString('pt-BR')}
-                      </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400">
-                        {qr.scan_count === 0 ? 'nenhum scan' : qr.scan_count === 1 ? 'scan' : 'scans'}
-                      </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 truncate" title={qr.name || 'Sem nome'}>
+                      {qr.name || <span className="text-slate-400 italic">Sem nome</span>}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                        {qr.scan_count.toLocaleString('pt-BR')}{' '}
+                        <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
+                          {qr.scan_count === 0 ? 'scans' : qr.scan_count === 1 ? 'scan' : 'scans'}
+                        </span>
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right ml-3">
                     <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {new Date(qr.created_at).toLocaleDateString('pt-BR', {
                         day: '2-digit',
@@ -502,15 +603,38 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                       Editar
                     </Button>
                   </DialogTrigger>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300"
-                    onClick={() => handleDownload(qr.short_id)}
-                  >
-                    <Download className="h-3.5 w-3.5 mr-1.5" />
-                    Baixar
-                  </Button>
+
+                  {/* Dropdown para Download PNG/SVG - Mobile */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300"
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" />
+                        Baixar
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleDownload(qr.short_id)}>
+                        <FileImage className="h-4 w-4 mr-2" />
+                        PNG
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownloadSVG(qr.short_id)}>
+                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                        SVG
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Button
                     variant="outline"
                     size="icon"
@@ -529,8 +653,8 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
       {/* Este componente fica "dormente" até ser ativado */}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Editar URL de Destino</DialogTitle>
-          <DialogDescription>O QR Code continuará o mesmo, mas o destino final será alterado.</DialogDescription>
+          <DialogTitle>Editar QR Code</DialogTitle>
+          <DialogDescription>Atualize o nome ou URL de destino do seu QR Code.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -538,6 +662,19 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
               Link Curto
             </Label>
             <Input id="current-url" value={`${appUrl}/${editingQr?.short_id}`} disabled className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-name" className="text-right">
+              Nome
+            </Label>
+            <Input
+              id="edit-name"
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              placeholder="Nome do QR Code"
+              maxLength={100}
+              className="col-span-3"
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="new-url" className="text-right">

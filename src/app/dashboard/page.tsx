@@ -7,11 +7,13 @@ import { useEffect, useState } from 'react';
 import CreateQrCodeDialog from './CreateQrCodeDialog';
 import DashboardLayout from './DashboardLayout';
 import QrCodeList from './QrCodeList';
+import QrCodeSearch from './QrCodeSearch';
 
 type QRCodeType = {
   id: number;
   short_id: string;
   original_url: string;
+  name: string | null;
   created_at: string;
   scan_count: number;
   custom_domain_id: number | null;
@@ -27,6 +29,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [qrcodes, setQrcodes] = useState<QRCodeType[]>([]);
+  const [filteredQrcodes, setFilteredQrcodes] = useState<QRCodeType[]>([]);
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'enterprise'>('free');
   const [_userId, setUserId] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
@@ -59,7 +62,8 @@ export default function DashboardPage() {
         `
         id, 
         short_id, 
-        original_url, 
+        original_url,
+        name,
         created_at, 
         scan_count,
         custom_domain_id,
@@ -83,6 +87,7 @@ export default function DashboardPage() {
         custom_domains: Array.isArray(qr.custom_domains) && qr.custom_domains.length > 0 ? qr.custom_domains[0] : null,
       })) as QRCodeType[];
       setQrcodes(transformedData);
+      setFilteredQrcodes(transformedData);
     }
 
     // Buscar perfil do usuário
@@ -109,6 +114,37 @@ export default function DashboardPage() {
   const handleQrCodeCreated = () => {
     // Recarrega os dados após criar um novo QR Code
     fetchData();
+  };
+
+  const handleSearchChange = ({ searchTerm, dateFrom, dateTo }: { searchTerm: string; dateFrom: string; dateTo: string }) => {
+    let filtered = [...qrcodes];
+
+    // Filtro de busca textual (nome, URL destino, short_id)
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((qr) => {
+        const matchesName = qr.name?.toLowerCase().includes(lowerSearch);
+        const matchesUrl = qr.original_url.toLowerCase().includes(lowerSearch);
+        const matchesShortId = qr.short_id.toLowerCase().includes(lowerSearch);
+        return matchesName || matchesUrl || matchesShortId;
+      });
+    }
+
+    // Filtro de data (de)
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((qr) => new Date(qr.created_at) >= fromDate);
+    }
+
+    // Filtro de data (até)
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((qr) => new Date(qr.created_at) <= toDate);
+    }
+
+    setFilteredQrcodes(filtered);
   };
 
   // Admin users get enterprise-level access
@@ -141,8 +177,21 @@ export default function DashboardPage() {
         <CreateQrCodeDialog tier={effectiveTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
       </div>
 
+      {qrcodes && qrcodes.length > 0 && (
+        <div className="mb-6">
+          <QrCodeSearch onSearchChange={handleSearchChange} />
+        </div>
+      )}
+
       {qrcodes && qrcodes.length > 0 ? (
-        <QrCodeList qrcodes={qrcodes} userTier={effectiveTier} />
+        filteredQrcodes.length > 0 ? (
+          <QrCodeList qrcodes={filteredQrcodes} userTier={effectiveTier} />
+        ) : (
+          <div className="w-full mt-4 p-8 bg-slate-100 dark:bg-slate-800 rounded-lg text-center">
+            <p className="text-slate-500 dark:text-slate-400 mb-3">Nenhum QR Code encontrado com os filtros aplicados.</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm">Tente ajustar sua busca ou limpar os filtros.</p>
+          </div>
+        )
       ) : (
         <div className="w-full mt-4 p-8 bg-slate-100 rounded-lg text-center">
           <p className="text-slate-500 mb-3">Você ainda não criou nenhum QR Code.</p>

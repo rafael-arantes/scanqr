@@ -163,7 +163,7 @@ export default function HomePage() {
                   </Link>
                   <Link href="/dashboard">
                     <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                      Começar Grátis
+                      Começar grátis
                     </Button>
                   </Link>
                 </>
@@ -186,7 +186,7 @@ export default function HomePage() {
               <span className="text-slate-900 dark:text-white">Crie QR Codes</span>
               <br />
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Rastreie Resultados
+                Rastreie resultados
               </span>
             </h1>
             <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -199,12 +199,12 @@ export default function HomePage() {
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-lg px-8"
                 >
-                  Começar Grátis
+                  Começar grátis
                 </Button>
               </Link>
               <Link href="/upgrade">
                 <Button size="lg" variant="outline" className="text-lg px-8">
-                  Ver Planos
+                  Ver planos
                 </Button>
               </Link>
             </div>
@@ -212,7 +212,7 @@ export default function HomePage() {
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200 dark:border-slate-700">
               <div>
                 <div className="text-3xl font-bold text-slate-900 dark:text-white">10+</div>
-                <div className="text-sm text-slate-600 dark:text-slate-400">QR Codes Grátis</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">QR Codes grátis</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-slate-900 dark:text-white">100%</div>
@@ -229,14 +229,14 @@ export default function HomePage() {
           <div className="lg:pl-8">
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-blue-500/10 p-8 border border-slate-200 dark:border-slate-700">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Experimente Agora</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Experimente agora</h2>
                 <p className="text-slate-600 dark:text-slate-400">Crie seu primeiro QR Code em segundos</p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="url" className="text-base">
-                    URL de Destino
+                    URL de destino
                   </Label>
                   <Input
                     type="url"
@@ -321,7 +321,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Analytics em Tempo Real</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Analytics em tempo real</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Acompanhe cada scan dos seus QR Codes. Veja estatísticas detalhadas e tome decisões baseadas em dados.
             </p>
@@ -332,7 +332,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Globe className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Domínios Customizados</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Domínios customizados</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Use seu próprio domínio (ex: qr.suaempresa.com) para fortalecer sua marca e aumentar a confiança.
             </p>
@@ -343,7 +343,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Link2 className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">URLs Encurtadas</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">URLs encurtadas</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Links curtos e elegantes que são fáceis de compartilhar e memorizar. Perfeito para redes sociais.
             </p>
@@ -354,7 +354,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Zap className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Super Rápido</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Super rápido</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Crie QR Codes em segundos. Interface intuitiva e performance otimizada para sua produtividade.
             </p>
@@ -365,7 +365,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <LineChart className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Dashboard Completo</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Dashboard completo</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Gerencie todos os seus QR Codes em um só lugar. Edite, exclua e monitore com facilidade.
             </p>
@@ -376,7 +376,7 @@ export default function HomePage() {
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Crown className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Planos Flexíveis</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Planos flexíveis</h3>
             <p className="text-slate-600 dark:text-slate-400">
               Do gratuito ao enterprise. Escolha o plano perfeito para suas necessidades e escale quando precisar.
             </p>
@@ -394,12 +394,12 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8">
-                Criar Conta Grátis
+                Criar conta grátis
               </Button>
             </Link>
             <Link href="/upgrade">
               <Button size="lg" variant="outline" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8">
-                Ver Planos Premium
+                Ver planos premium
               </Button>
             </Link>
           </div>

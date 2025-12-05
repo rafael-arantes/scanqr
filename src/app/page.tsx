@@ -501,14 +501,14 @@ export default function HomePage() {
               <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Legal</h3>
               <ul className="space-y-2 text-slate-600 dark:text-slate-400">
                 <li>
-                  <a href="#" className="hover:text-blue-600">
+                  <Link href="/privacidade" className="hover:text-blue-600">
                     Privacidade
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-600">
+                  <Link href="/termos" className="hover:text-blue-600">
                     Termos
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

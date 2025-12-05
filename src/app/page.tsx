@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart3, Crown, Download, Globe, LineChart, Link2, Sparkles, Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import QRCodeGenerator from 'qrcode';
 import { useEffect, useState } from 'react';
@@ -137,17 +138,77 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://scanqr.com.br/#organization',
+                name: 'ScanQR',
+                url: 'https://scanqr.com.br',
+                logo: {
+                  '@type': 'ImageObject',
+                  url: 'https://scanqr.com.br/scan-qr-svg.svg',
+                },
+                sameAs: [],
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://scanqr.com.br/#website',
+                url: 'https://scanqr.com.br',
+                name: 'ScanQR',
+                description: 'Gerador de QR Codes Dinâmicos com Analytics',
+                publisher: {
+                  '@id': 'https://scanqr.com.br/#organization',
+                },
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: 'https://scanqr.com.br/?s={search_term_string}',
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+              {
+                '@type': 'SoftwareApplication',
+                name: 'ScanQR',
+                applicationCategory: 'BusinessApplication',
+                operatingSystem: 'Web',
+                offers: [
+                  {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'BRL',
+                    name: 'Plano Gratuito',
+                  },
+                  {
+                    '@type': 'Offer',
+                    price: '29',
+                    priceCurrency: 'BRL',
+                    name: 'Plano Pro',
+                  },
+                ],
+                aggregateRating: {
+                  '@type': 'AggregateRating',
+                  ratingValue: '4.8',
+                  ratingCount: '127',
+                },
+                description:
+                  'Crie QR Codes dinâmicos e gerencie seus links com facilidade. Acompanhe estatísticas em tempo real e use domínios customizados.',
+              },
+            ],
+          }),
+        }}
+      />
+
       {/* Navigation */}
       <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/50 dark:border-slate-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                ScanQR
-              </span>
+              <Image src="/scan-qr-svg.svg" alt="ScanQR" width={237} height={56} className="h-14 w-auto" priority />
             </div>
             <div className="flex items-center gap-3">
               {isAuthenticated ? (

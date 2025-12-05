@@ -1,3 +1,9 @@
-# Bloqueia todos os robôs de busca de todo o site
+# Allow crawlers to index public pages
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://scanqr.com.br/sitemap.xml

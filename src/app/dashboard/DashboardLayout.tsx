@@ -3,6 +3,7 @@
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import type { SubscriptionTier } from '@/lib/subscriptionTiers';
 import { Menu } from 'lucide-react';
+import Image from 'next/image';
 import DashboardSidebar from './DashboardSidebar';
 
 type DashboardLayoutProps = {
@@ -36,7 +37,7 @@ export default function DashboardLayout({
       <main className="flex-1 p-4 sm:p-6 lg:p-8">
         {/* Header para Mobile com Menu Hambúrguer */}
         <header className="md:hidden flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Meu Painel</h1>
+          <Image src="/scan-qr-svg.svg" alt="ScanQR" width={237} height={56} className="h-10 w-auto" priority />
           <Sheet>
             <SheetTrigger asChild>
               <button className="p-2 rounded-md hover:bg-slate-200">

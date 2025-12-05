@@ -72,7 +72,7 @@ export function FeedbackDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-start">
           <MessageSquare className="mr-2 h-4 w-4" />
-          Enviar Feedback
+          Enviar feedback
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

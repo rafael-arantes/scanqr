@@ -9,6 +9,7 @@ import {
   type SubscriptionTier,
 } from '@/lib/subscriptionTiers';
 import { Crown, Settings, Shield, TrendingUp, User, Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { FeedbackDialog } from './FeedbackDialog';
 import LogoutButton from './LogoutButton';
@@ -78,7 +79,14 @@ export default function DashboardSidebar({
   return (
     <aside className="w-full h-full bg-slate-50 p-6 flex flex-col overflow-y-auto">
       <div className="flex-1 space-y-6">
-        <h2 className="text-xl font-semibold">Minha Conta</h2>
+        {/* Logo */}
+        <div className="flex items-center justify-center pb-4 border-b border-slate-200">
+          <Link href="/">
+            <Image src="/scan-qr-svg.svg" alt="ScanQR" width={237} height={56} className="h-12 w-auto" priority />
+          </Link>
+        </div>
+
+        <h2 className="text-xl font-semibold">Minha conta</h2>
 
         {/* Informações do Usuário */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
@@ -106,7 +114,7 @@ export default function DashboardSidebar({
         {/* Informações do Plano */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-600">Plano Atual</span>
+            <span className="text-sm font-medium text-slate-600">Plano atual</span>
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getTierBadgeColor()}`}>
               <TierIcon className="h-3.5 w-3.5" />
               {getTierLabel()}
@@ -203,19 +211,19 @@ export default function DashboardSidebar({
               href="/dashboard/custom-domains"
               className="block text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors"
             >
-              🌐 Domínios Customizados
+              🌐 Domínios customizados
             </Link>
           )}
           <Link
             href="/upgrade"
             className="block text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors"
           >
-            💎 Planos e Preços
+            💎 Planos e preços
           </Link>
           <ProfileDialog onProfileUpdated={onProfileUpdated}>
             <button className="w-full text-left text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Configurações de Perfil
+              Configurações de perfil
             </button>
           </ProfileDialog>
         </div>
@@ -231,7 +239,7 @@ export default function DashboardSidebar({
               href="/dashboard/admin/users"
               className="block text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-2 rounded-md transition-colors"
             >
-              👥 Gerenciar Usuários
+              👥 Gerenciar usuários
             </Link>
             <Link
               href="/dashboard/admin/feedbacks"

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getTierLimits, type SubscriptionTier } from '@/lib/subscriptionTiers';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Check, Crown, Sparkles, X, Zap } from 'lucide-react';
+import { Check, Crown, X, Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -137,12 +138,7 @@ export default function UpgradePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                ScanQR
-              </span>
+              <Image src="/scan-qr-svg.svg" alt="ScanQR" width={237} height={56} className="h-14 w-auto" priority />
             </Link>
             <div className="flex items-center gap-3">
               {isLoggedIn ? (

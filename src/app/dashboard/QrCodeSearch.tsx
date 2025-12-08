@@ -40,17 +40,17 @@ export default function QrCodeSearch({ onSearchChange }: QrCodeSearchProps) {
   const hasActiveFilters = searchTerm || dateFrom || dateTo;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-full">
       {/* Barra de Busca Principal */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      <div className="flex gap-2 max-w-full">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             type="text"
             placeholder="Buscar por nome, URL destino ou URL curta..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 w-full"
           />
           {searchTerm && (
             <button

@@ -172,9 +172,11 @@ export default function DashboardPage() {
       stripeCustomerId={stripeCustomerId}
       onProfileUpdated={fetchData}
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Meus QR Codes</h1>
-        <CreateQrCodeDialog tier={effectiveTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4 max-w-full">
+        <h1 className="text-3xl font-bold truncate">Meus QR Codes</h1>
+        <div className="shrink-0 w-full md:w-auto">
+          <CreateQrCodeDialog tier={effectiveTier} currentQrCount={qrcodes.length} onQrCodeCreated={handleQrCodeCreated} />
+        </div>
       </div>
 
       {qrcodes && qrcodes.length > 0 && (

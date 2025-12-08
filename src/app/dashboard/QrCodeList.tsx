@@ -492,11 +492,11 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
         </div>
 
         {/* ===== LAYOUT DE CARDS PARA MOBILE (abaixo de md) ===== */}
-        <div className="md:hidden space-y-4">
+        <div className="md:hidden space-y-4 max-w-full">
           {codes.map((qr) => (
             <div
               key={qr.id}
-              className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden"
+              className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden max-w-full"
             >
               {/* Header do Card */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 px-4 py-3 border-b border-blue-100 dark:border-blue-800">
@@ -540,16 +540,16 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                   {/* Informações */}
                   <div className="flex-1 min-w-0 space-y-3">
                     {/* Link Encurtado */}
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
                         Link Encurtado
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <a
                           href={getQrCodeUrl(qr)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline truncate"
+                          className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline truncate block min-w-0"
                         >
                           {qr.custom_domains?.mode === 'routing' ? `${qr.custom_domains.domain}/${qr.short_id}` : qr.short_id}
                         </a>
@@ -558,9 +558,9 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                         </Button>
                       </div>
                       {qr.custom_domains?.verified && (
-                        <div className="mt-1.5">
+                        <div className="mt-1.5 overflow-hidden">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border ${
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border truncate max-w-full ${
                               qr.custom_domains.mode === 'routing'
                                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                 : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
@@ -574,13 +574,13 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                     </div>
 
                     {/* URL Original */}
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Destino</div>
                       <a
                         href={qr.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2"
+                        className="text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 break-all"
                       >
                         {qr.original_url}
                       </a>
@@ -591,16 +591,16 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
 
               {/* Footer com Ações */}
               <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 max-w-full">
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300"
+                      className="flex-1 min-w-0 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300"
                       onClick={() => handleOpenEditModal(qr)}
                     >
-                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                      Editar
+                      <Pencil className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                      <span className="truncate">Editar</span>
                     </Button>
                   </DialogTrigger>
 
@@ -610,10 +610,10 @@ export default function QrCodeList({ qrcodes, userTier }: QrCodeListProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300"
+                        className="flex-1 min-w-0 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300"
                       >
-                        <Download className="h-3.5 w-3.5 mr-1.5" />
-                        Baixar
+                        <Download className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                        <span className="truncate">Baixar</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

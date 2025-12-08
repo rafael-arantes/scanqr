@@ -32,11 +32,11 @@ export default function DashboardLayout({
   onProfileUpdated,
 }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen w-full bg-slate-100 flex">
+    <div className="min-h-screen w-full bg-slate-100 flex overflow-hidden">
       {/* Main Content (Esquerda) */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-full overflow-x-hidden">
         {/* Header para Mobile com Menu Hambúrguer */}
-        <header className="md:hidden flex items-center justify-between mb-4">
+        <header className="lg:hidden flex items-center justify-between mb-4">
           <Image src="/scan-qr-svg.svg" alt="ScanQR" width={237} height={56} className="h-10 w-auto" priority />
           <Sheet>
             <SheetTrigger asChild>
@@ -63,7 +63,7 @@ export default function DashboardLayout({
       </main>
 
       {/* Sidebar para Desktop (Direita) */}
-      <div className="hidden md:block md:w-[300px] lg:w-[350px] border-l border-slate-200">
+      <div className="hidden lg:block lg:w-[350px] border-l border-slate-200">
         <DashboardSidebar
           user={user}
           tier={tier}

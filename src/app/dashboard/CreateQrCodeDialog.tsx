@@ -145,7 +145,7 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2 w-full md:w-auto">
           <Plus className="w-4 h-4" />
           Criar QR Code
         </Button>

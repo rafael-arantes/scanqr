@@ -32,8 +32,11 @@ export async function middleware(req: NextRequest) {
   // Detectar se está acessando via domínio customizado
   const appDomain = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000';
 
-  // Se não for o domínio principal, verificar se é um domínio customizado
-  if (hostname !== appDomain && !hostname.includes('localhost')) {
+  // Verificar se é um IP local (192.168.x.x, 10.x.x.x, 172.16-31.x.x, 127.x.x.x)
+  const isLocalIP = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|127\.)/.test(hostname);
+
+  // Se não for o domínio principal, localhost ou IP local, verificar se é um domínio customizado
+  if (hostname !== appDomain && !hostname.includes('localhost') && !isLocalIP) {
     const pathname = req.nextUrl.pathname;
 
     // Padrão: /{shortId} ou /[shortId]

@@ -135,10 +135,12 @@ export default function HomePage() {
       downloadLink.click();
       document.body.removeChild(downloadLink);
 
-      // Track QR code download
-      trackEvent(UmamiEvents.QR_CODE_DOWNLOADED, {
-        downloadedFrom: 'homepage',
-      });
+      // Track QR code download - use setTimeout to ensure Umami script is loaded
+      setTimeout(() => {
+        trackEvent(UmamiEvents.QR_CODE_DOWNLOADED, {
+          downloadedFrom: 'homepage',
+        });
+      }, 100);
     } catch (err) {
       console.error(err);
       toast({

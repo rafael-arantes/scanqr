@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,6 +35,9 @@ export default function ManageSubscriptionButton({
 
   const handleManage = async () => {
     setIsLoading(true);
+
+    // Track manage subscription click
+    trackEvent(UmamiEvents.SUBSCRIPTION_MANAGE_CLICKED, { tier: tier || 'unknown' });
 
     try {
       const response = await fetch('/api/stripe/portal', {

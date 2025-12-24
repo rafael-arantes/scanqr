@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { SubscriptionTier } from '@/lib/subscriptionTiers';
 import { canAddCustomDomain, getCustomDomainLimitMessage } from '@/lib/subscriptionTiers';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import type { CustomDomainStats } from '@/types/customDomains';
 import { AlertCircle, Check, CheckCircle2, Clock, Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -69,6 +70,13 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
         setShowAddDialog(false);
         setNewDomain('');
         setNewDomainMode('branding');
+        
+        // Track custom domain addition
+        trackEvent(UmamiEvents.CUSTOM_DOMAIN_ADDED, {
+          tier,
+          mode: newDomainMode,
+        });
+        
         toast({
           title: 'Sucesso',
           description: 'Domínio adicionado! Configure os registros DNS para verificação.',
@@ -104,6 +112,11 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
       const data = await response.json();
 
       if (response.ok) {
+        // Track domain verification
+        trackEvent(UmamiEvents.CUSTOM_DOMAIN_VERIFIED, {
+          tier,
+        });
+        
         toast({
           title: 'Sucesso',
           description: 'Domínio verificado com sucesso!',
@@ -155,6 +168,12 @@ export default function CustomDomainsPage({ tier, userId: _userId }: CustomDomai
 
       if (response.ok) {
         setDomains(domains.filter((d) => d.id !== domainId));
+        
+        // Track domain deletion
+        trackEvent(UmamiEvents.CUSTOM_DOMAIN_DELETED, {
+          tier,
+        });
+        
         toast({
           title: 'Sucesso',
           description: 'Domínio removido com sucesso',

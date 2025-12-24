@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { useState } from 'react';
 
 interface UpgradeButtonProps {
@@ -17,6 +18,9 @@ export default function UpgradeButton({ tier, children, className, variant = 'de
 
   const handleUpgrade = async () => {
     setIsLoading(true);
+
+    // Track upgrade button click
+    trackEvent(UmamiEvents.UPGRADE_BUTTON_CLICKED, { tier });
 
     try {
       const response = await fetch('/api/stripe/checkout', {

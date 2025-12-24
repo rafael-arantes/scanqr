@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { canCreateQrCode, getQrCodeLimitMessage, type SubscriptionTier } from '@/lib/subscriptionTiers';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Globe, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -97,6 +98,15 @@ export default function CreateQrCodeDialog({ tier, currentQrCount, onQrCodeCreat
           description: `URL: ${data.shortUrl}`,
           variant: 'success',
         });
+        
+        // Track QR code creation
+        trackEvent(UmamiEvents.QR_CODE_CREATED, {
+          tier,
+          hasCustomDomain: selectedDomainId !== null,
+          hasName: name.trim().length > 0,
+          createdFrom: 'dashboard',
+        });
+        
         setUrl(''); // Limpa o input
         setName(''); // Limpa o nome
         setSelectedDomainId(null); // Limpa o domínio

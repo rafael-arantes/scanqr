@@ -4,6 +4,7 @@ import UpgradeButton from '@/components/stripe/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getTierLimits, type SubscriptionTier } from '@/lib/subscriptionTiers';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Check, Crown, X, Zap } from 'lucide-react';
 import Image from 'next/image';
@@ -57,6 +58,9 @@ export default function UpgradePage() {
     };
 
     fetchUserTier();
+    
+    // Track upgrade page view
+    trackEvent(UmamiEvents.UPGRADE_PAGE_VIEWED);
   }, [supabase, router]);
 
   const handlePlanClick = (tier: SubscriptionTier) => {

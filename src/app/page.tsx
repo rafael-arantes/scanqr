@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart3, Crown, Download, Globe, LineChart, Link2, Sparkles, Zap } from 'lucide-react';
 import Image from 'next/image';
@@ -51,6 +52,13 @@ export default function HomePage() {
 
         if (response.ok) {
           setQrValue(data.shortUrl);
+
+          // Track QR code creation
+          trackEvent(UmamiEvents.QR_CODE_CREATED, {
+            tier: 'anonymous',
+            hasCustomDomain: false,
+            createdFrom: 'homepage',
+          });
 
           // Se houver informação de uso, mostrar ao usuário
           if (data.usage) {
@@ -126,6 +134,11 @@ export default function HomePage() {
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
+
+      // Track QR code download
+      trackEvent(UmamiEvents.QR_CODE_DOWNLOADED, {
+        downloadedFrom: 'homepage',
+      });
     } catch (err) {
       console.error(err);
       toast({

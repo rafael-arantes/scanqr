@@ -1,5 +1,6 @@
 'use client';
 
+import { trackAuth } from '@/lib/umami';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -108,6 +109,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
+    
+    // Track login/dashboard access (simple approach - tracks on every dashboard visit)
+    // In production, you might want to track only first visit per session
+    const hasTrackedLogin = sessionStorage.getItem('umami_login_tracked');
+    if (!hasTrackedLogin) {
+      trackAuth('login');
+      sessionStorage.setItem('umami_login_tracked', 'true');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

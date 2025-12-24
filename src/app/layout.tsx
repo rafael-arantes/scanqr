@@ -83,6 +83,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
+      <head>
+        {/* Umami Analytics */}
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+          <script
+            defer
+            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || 'https://cloud.umami.is/script.js'}
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+          />
+        )}
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Toaster />

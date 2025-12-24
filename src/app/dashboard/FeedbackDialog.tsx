@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent, UmamiEvents } from '@/lib/umami';
 import { Loader2, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,6 +55,11 @@ export function FeedbackDialog() {
       setCategory('suggestion');
       setIsOpen(false);
 
+      // Track feedback submission
+      trackEvent(UmamiEvents.FEEDBACK_SUBMITTED, {
+        category,
+      });
+
       toast({
         title: 'Feedback enviado!',
         description: 'Obrigado pela sua contribuição.',
@@ -68,7 +74,15 @@ export function FeedbackDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (open) {
+          trackEvent(UmamiEvents.FEEDBACK_DIALOG_OPENED);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-start">
           <MessageSquare className="mr-2 h-4 w-4" />
